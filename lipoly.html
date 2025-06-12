@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>報價系統</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        width: 800px;
+        background: white;
+        margin: 20px auto;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+      }
+      h2,
+      h3 {
+        text-align: center;
+        color: #333;
+      }
+      .section {
+        margin: 15px 0;
+        padding: 15px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        background: #fafafa;
+      }
+      .quote-result p {
+        display: inline-block;
+        width: 48%;
+        margin: 5px 1%;
+        vertical-align: top;
+      }
+
+      .form-group {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+      .form-group label {
+        width: 40%;
+        font-weight: bold;
+      }
+      .form-group input {
+        width: 55%;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+      .checkbox-group {
+        display: flex;
+        justify-content: center; /* 讓選項置中 */
+        align-items: center;
+        gap: 1px; /* 增加選項間的間距 */
+        flex-wrap: wrap; /* 避免超過寬度時換行 */
+      }
+      .checkbox-group1 {
+        display: flex;
+        align-items: center;
+        gap: 5px; /* 調整間距 */
+        position: relative;
+      }
+
+      #stockCodeContainer {
+        visibility: hidden; /* 預設隱藏 */
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-left: 10px; /* 預留間距，避免輸入框出現時影響排版 */
+        white-space: nowrap;
+      }
+
+      #stockCodeContainer.visible {
+        visibility: visible; /* 當選擇「是」時，顯示 */
+      }
+
+      #stockCodeContainer input {
+        flex-grow: 1; /* 讓輸入框佔據剩餘空間 */
+        width: 150px; /* 設定最小寬度，避免過小 */
+        min-width: 150px;
+        padding: 5px; /* 內部間距，讓文字不會太擠 */
+      }
+
+      #competitorContainer {
+        visibility: hidden; /* 預設隱藏 */
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-left: 10px; /* 預留間距，避免輸入框出現時影響排版 */
+        white-space: nowrap;
+      }
+
+      #competitorContainer.visible {
+        visibility: visible; /* 當選擇「是」時，顯示 */
+      }
+
+      #competitorContainer input {
+        flex-grow: 1; /* 讓輸入框佔據剩餘空間 */
+        width: 150px; /* 設定最小寬度，避免過小 */
+        min-width: 150px;
+        padding: 5px; /* 內部間距，讓文字不會太擠 */
+      }
+
+      .checkbox-group2 {
+        display: flex;
+        align-items: center;
+        gap: 42px; /* 調整間距 */
+        position: relative;
+        white-space: nowrap;
+      }
+
+      .form-group select {
+        width: 55%;
+        padding: 5px;
+        height: 34px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 16px;
+        box-sizing: border-box;
+        background-color: white;
+        appearance: none; /* 不同瀏覽器內建樣式統一（視需要打開） */
+        -webkit-appearance: none; /* 給Safari */
+        -moz-appearance: none; /* 給Firefox */
+      }
+
+      .buttons {
+        text-align: center;
+        margin-top: 20px;
+      }
+      .buttons button {
+        padding: 10px 15px;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        cursor: pointer;
+        border-radius: 5px;
+        margin: 5px;
+        transition: background 0.3s ease-in-out;
+      }
+      .buttons button:hover {
+        background-color: #0056b3;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>報價系統</h2>
+
+      <div class="section">
+        <h3>📌 基本資料</h3>
+        <div class="form-group">
+          <label>公司名稱：</label>
+          <input type="text" id="companyName" placeholder="請輸入公司名稱" />
+        </div>
+        <div class="form-group">
+          <label>上市櫃：</label>
+          <div class="checkbox-group1">
+            <input
+              type="radio"
+              name="listedCompany"
+              value="否"
+              id="listedNo"
+              checked
+            />
+            <label for="listedNo">否</label>
+            <input
+              type="radio"
+              name="listedCompany"
+              value="是"
+              id="listedYes"
+            />
+            <label for="listedYes">是</label>
+            <!-- <div id="stockCodeContainer">
+              <label for="stockCode"> 股票代碼：</label>
+              <input type="text" id="stockCode" placeholder="請輸入股票代碼" />
+            </div> -->
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>產業別：</label>
+          <input type="text" id="industryType" placeholder="請輸入行業別" />
+        </div>
+
+        <div class="form-group">
+          <label>是否有競爭對手：</label>
+          <div class="checkbox-group1">
+            <input
+              type="radio"
+              name="isCompetitor"
+              value="否"
+              id="isCompetitorNo"
+              checked
+              onclick="toggleCompetitorInput()"
+            />
+            <label for="isCompetitorNo">否</label>
+            <input
+              type="radio"
+              name="isCompetitor"
+              value="是"
+              id="isCompetitorYes"
+              onclick="toggleCompetitorInput()"
+            />
+            <label for="isCompetitorYes">是</label>
+            <div id="competitorContainer">
+              <label for="OtherCompetitor"> 對手公司：</label>
+              <input
+                type="text"
+                id="OtherCompetitorName"
+                placeholder="請輸入對手公司名"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <h3>📌 國貿條件與出口費用</h3>
+        <div class="form-group">
+          <label for="place">交貨地點：</label>
+          <select id="place">
+            <option value="">請選擇</option>
+            <option value="台灣">台灣</option>
+            <option value="上海">上海</option>
+            <option value="香港">香港</option>
+            <option value="越南">越南</option>
+            <option value="煙台">煙台</option>
+            <option value="深圳">深圳</option>
+            <option value="廣州">廣州</option>
+            <option value="印度">印度</option>
+            <option value="泰國">泰國</option>
+            <option value="東京">東京</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="shipping">運送方式：</label>
+          <select id="shipping">
+            <option value="">請選擇</option>
+            <option value="陸運">陸運</option>
+            <option value="海運">海運</option>
+            <option value="空運">空運</option>
+            <option value="快遞">快遞</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>國貿條件：</label>
+          <select id="condition">
+            <option value="">請選擇</option>
+            <option value="EXW">EXW – Ex Works（工廠交貨條件）</option>
+            <option value="FCA">FCA – Free Carrier（貨物交運送人條件）</option>
+            <option value="CPT">CPT – Carriage Paid to（運費付訖條件）</option>
+            <option value="CIP">
+              CIP – Carriage and Insurance Paid To（運保費付訖條件）
+            </option>
+            <option value="DAP">
+              DAP – Delivered at Place（目的地交貨條件）
+            </option>
+            <option value="DPU">
+              DPU – Delivered at Place Unloaded（卸貨地交易條件）
+            </option>
+            <option value="DDP">
+              DDP – Delivered Duty Paid（輸入國稅訖交貨條件）
+            </option>
+            <option value="FAS">
+              FAS – Free Alongside Ship（輸出港船邊交貨條件）
+            </option>
+            <option value="FOB">
+              FOB – Free on Board（輸出港船上交貨條件）
+            </option>
+            <option value="CFR">CFR – Cost and Freight（運費在內條件）</option>
+            <option value="CIF">
+              CIF – Cost Insurance and Freight（運保費在內條件）
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>運費：</label>
+          <input type="text" id="fee" />
+        </div>
+        <div class="form-group">
+          <label>台灣報關費用：</label>
+          <input type="text" id="freight" />
+        </div>
+        <div class="form-group">
+          <label>目的地費用：</label>
+          <input type="text" id="taxe" />
+        </div>
+      </div>
+      <div class="section">
+        <h3>📌 料號資訊</h3>
+        <div class="form-group">
+          <label>料號：</label>
+          <input type="text" id="item" />
+        </div>
+        <div class="form-group">
+          <label>年用量：</label>
+          <input type="text" id="year" />
+        </div>
+        <div class="form-group">
+          <label>MOQ：</label>
+          <input type="text" id="MOQ" />
+        </div>
+      </div>
+      <div class="section">
+        <h3>📌 板材資訊</h3>
+        <div class="form-group">
+          <label>選擇尺寸：</label>
+          <select id="materialSize" onchange="updateMaterialInput()">
+            <option value="custom">自訂尺寸</option>
+            <option value="320x320">320 x 320</option>
+            <option value="640x320">640 x 320</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>板材寬度（mm）：</label>
+          <input type="number" id="materialWidth" />
+        </div>
+        <div class="form-group">
+          <label>板材長度（mm）：</label>
+          <input type="number" id="materialHeight" />
+        </div>
+      </div>
+      <div class="section">
+        <h3>📌 裁切形狀 & 數量</h3>
+
+        <div class="form-group">
+          <label>形狀：</label>
+          <div class="checkbox-group2">
+            <input
+              type="radio"
+              name="shape"
+              value="rectangle"
+              id="rectangle"
+              checked
+              onclick="toggleShape()"
+            />
+            <label for="rectangle">方形</label>
+            <input
+              type="radio"
+              name="shape"
+              value="irregular"
+              id="irregular"
+              onclick="toggleShape()"
+            />
+            <label for="irregular">不規則形狀(+2mm)</label>
+          </div>
+        </div>
+
+        <div id="rectInputs">
+          <div class="form-group">
+            <label>長度：</label>
+            <input type="number" id="length" />
+          </div>
+          <div class="form-group">
+            <label>寬度：</label>
+            <input type="number" id="width" />
+          </div>
+          <div class="form-group">
+            <label>厚度：</label>
+            <input type="number" id="height" />
+          </div>
+        </div>
+
+        <div id="irregularInputs" class="hidden">
+          <div class="form-group">
+            <label>長度：</label>
+            <input type="number" id="maxLength" />
+          </div>
+          <div class="form-group">
+            <label>寬度：</label>
+            <input type="number" id="maxWidth" />
+          </div>
+          <div class="form-group">
+            <label>厚度：</label>
+            <input type="number" id="maxHeight" />
+          </div>
+
+          <div class="form-group">
+            <label>上傳檔案：</label>
+            <input type="file" id="fileUpload" />
+          </div>
+
+          <div class="form-group">
+            <label>刀模費用：</label>
+            <input
+              type="checkbox"
+              id="knifeMoldCheck"
+              onchange="toggleKnifeMoldInput()"
+            />
+            <input
+              type="number"
+              id="knifeMoldPrice"
+              class="hidden"
+              placeholder="請輸入刀模費用"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <h3>📌 特殊加工</h3>
+        <div class="checkbox-group">
+          <input type="checkbox" id="sticker" value="0.4" /> 拉拔 (+0.4/孔)
+          <input type="checkbox" id="drill" value="0.2" /> 挖洞 (+0.2/孔)
+          <input type="checkbox" id="notstick" value="40" /> 表面不黏 (+40/片)
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>📌 背膠</h3>
+        <div class="checkbox-group">
+          <input type="radio" name="glueType" id="noGlue" value="0" />
+          <label for="noGlue">不背膠</label>
+          <input type="radio" name="glueType" id="normalGlue" value="30" />
+          <label for="normalGlue">普通膠 (+30/片)</label>
+          <input type="radio" name="glueType" id="specialGlue" value="45" />
+          <label for="specialGlue">指定膠 (+45/片)</label>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>📌 報價資訊</h3>
+        <div class="form-group">
+          <label>訂單數量：</label>
+          <input type="number" id="quantity" />
+        </div>
+        <div class="form-group">
+          <label>牌價：</label>
+          <input type="number" id="unitPrice" />
+        </div>
+        <div class="form-group">
+          <label>折數：</label>
+          <input type="text" id="discount" placeholder="6折請填0.6" />
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button onclick="calculatePrice()">計算價格</button>
+        <button onclick="addToTable()">編輯完成</button>
+        <button onclick="exportToExcel()">下載 Excel 報價單</button>
+      </div>
+
+      <div class="section">
+        <h3>📌 公司資訊</h3>
+        <p id="quoteDetails"></p>
+      </div>
+
+      <div class="section quote-result">
+        <h3>📌 報價結果</h3>
+        <p>
+          <strong>1pcs 價格（不含其他費用）：</strong>
+          <span id="materialCostPerPiece1">0.0000</span> 元
+        </p>
+        <p>
+          <strong>1pcs 價格（含費用）：</strong>
+          <span id="materialCostPerPiece">0.0000</span> 元
+        </p>
+        <p>
+          <strong>總價格（不含其他費用）：</strong>
+          <span id="totalPrice1">0</span> 元
+        </p>
+        <p>
+          <strong>總價格（含費用）：</strong> <span id="totalPrice">0</span> 元
+        </p>
+      </div>
+
+      <div class="section">
+        <h3>📌 切割方式</h3>
+        <p id="cuttingResult"></p>
+      </div>
+      <div class="section">
+        <h3>📌 計算說明</h3>
+        <p id="calculationExplanation"></p>
+      </div>
+
+      <div class="section">
+        <h3>📌 完整報價表</h3>
+        <table id="quoteTable" border="1" width="100%">
+          <thead>
+            <tr>
+              <th>序號</th>
+              <th>品項/數量/尺寸</th>
+              <th>年用量</th>
+              <th>MOQ</th>
+              <th>折數</th>
+              <th>特殊加工</th>
+              <th>背膠</th>
+              <th>刀模費用</th>
+              <th>不含出口費之單PCS價格</th>
+              <th>含出口費之單PCS價格</th>
+              <th>不含出口費之總價</th>
+              <th>含出口費之總價</th>
+              <th>出口費用占比</th>
+              <th>片材尺寸</th>
+              <th style="display: none">unitPrice</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      document.querySelectorAll('input[name="shape"]').forEach((input) => {
+        input.addEventListener("change", function () {
+          if (this.value === "rectangle") {
+            document.getElementById("rectInputs").classList.remove("hidden");
+            document.getElementById("irregularInputs").classList.add("hidden");
+            document.getElementById("fileUpload").classList.add("hidden");
+            document.getElementById("knifeMoldCheck").checked = false;
+            document.getElementById("knifeMoldPrice").classList.add("hidden");
+            document.getElementById("knifeMoldPrice").value = "";
+            clearIrregularInputs();
+          } else {
+            document.getElementById("rectInputs").classList.add("hidden");
+            document
+              .getElementById("irregularInputs")
+              .classList.remove("hidden");
+            document.getElementById("fileUpload").classList.remove("hidden");
+            clearRectangleInputs();
+          }
+        });
+      });
+
+      function toggleKnifeMoldInput() {
+        let knifeMoldCheck = document.getElementById("knifeMoldCheck");
+        let knifeMoldPrice = document.getElementById("knifeMoldPrice");
+
+        if (knifeMoldCheck.checked) {
+          knifeMoldPrice.classList.remove("hidden");
+        } else {
+          knifeMoldPrice.classList.add("hidden");
+          knifeMoldPrice.value = "";
+        }
+      }
+
+      function updateMaterialInput() {
+        const size = document.getElementById("materialSize").value;
+        const widthInput = document.getElementById("materialWidth");
+        const heightInput = document.getElementById("materialHeight");
+
+        if (size === "320x320") {
+          widthInput.value = 320;
+          heightInput.value = 320;
+          widthInput.disabled = true;
+          heightInput.disabled = true;
+        } else if (size === "640x320") {
+          widthInput.value = 640;
+          heightInput.value = 320;
+          widthInput.disabled = true;
+          heightInput.disabled = true;
+        } else {
+          widthInput.value = "";
+          heightInput.value = "";
+          widthInput.disabled = false;
+          heightInput.disabled = false;
+        }
+      }
+
+      function clearRectangleInputs() {
+        document.getElementById("length").value = "";
+        document.getElementById("width").value = "";
+        document.getElementById("height").value = "";
+      }
+
+      function clearIrregularInputs() {
+        document.getElementById("maxLength").value = "";
+        document.getElementById("maxWidth").value = "";
+        document.getElementById("maxHeight").value = "";
+      }
+
+      function calculateCutting1() {
+        const materialWidth =
+          parseInt(document.getElementById("materialWidth").value) || 0;
+        const materialHeight =
+          parseInt(document.getElementById("materialHeight").value) || 0;
+        let shape = document.querySelector('input[name="shape"]:checked').value;
+        let bestCut = 1;
+
+        if (shape === "rectangle") {
+          let pieceWidth =
+            parseFloat(document.getElementById("width").value) || 0;
+          let pieceHeight =
+            parseFloat(document.getElementById("length").value) || 0;
+          if (pieceWidth > 0 && pieceHeight > 0) {
+            bestCut = calculateCutting();
+          }
+        } else {
+          let maxLength =
+            (parseFloat(document.getElementById("maxLength").value) || 0) + 2;
+          let maxWidth =
+            (parseFloat(document.getElementById("maxWidth").value) || 0) + 2;
+          if (maxLength > 1 && maxWidth > 1) {
+            bestCut = calculateCutting2();
+          }
+        }
+
+        return bestCut;
+      }
+
+      function calculateCutting2() {
+        const materialWidth =
+          parseInt(document.getElementById("materialWidth").value) || 0;
+        const materialHeight =
+          parseInt(document.getElementById("materialHeight").value) || 0;
+        let pieceWidth =
+          2 + (parseFloat(document.getElementById("maxLength").value) || 0);
+        let pieceHeight =
+          2 + (parseFloat(document.getElementById("maxWidth").value) || 0);
+
+        if (pieceWidth <= 0 || pieceHeight <= 0) {
+          document.getElementById("cuttingResult").innerText =
+            "請輸入有效的長度和寬度。";
+          return 0;
+        }
+
+        function getBestCut(
+          materialWidth,
+          materialHeight,
+          pieceWidth,
+          pieceHeight
+        ) {
+          let maxPieces = 0;
+          let bestConfig = "";
+
+          for (let i = 0; i <= Math.floor(materialHeight / pieceHeight); i++) {
+            let firstCutRows = i;
+            let remainingHeight = materialHeight - firstCutRows * pieceHeight;
+            let firstCutColumns = Math.floor(materialWidth / pieceWidth);
+            let secondCutRows = Math.floor(remainingHeight / pieceWidth);
+            let secondCutColumns = Math.floor(materialWidth / pieceHeight);
+
+            let totalPieces =
+              firstCutRows * firstCutColumns + secondCutRows * secondCutColumns;
+            if (totalPieces > maxPieces) {
+              maxPieces = totalPieces;
+              bestConfig = `先切 ${firstCutRows} 列，每列 ${firstCutColumns} 片，剩餘高度再切 ${secondCutRows} 列，每列 ${secondCutColumns} 片。`;
+            }
+          }
+          return { maxPieces, bestConfig };
+        }
+
+        let result1 = getBestCut(
+          materialWidth,
+          materialHeight,
+          pieceWidth,
+          pieceHeight
+        );
+        let result2 = getBestCut(
+          materialHeight,
+          materialWidth,
+          pieceWidth,
+          pieceHeight
+        );
+        let bestResult =
+          result1.maxPieces >= result2.maxPieces ? result1 : result2;
+
+        let totalArea = materialWidth * materialHeight;
+        let usedArea = pieceWidth * pieceHeight * bestResult.maxPieces;
+        let wastePercent = ((totalArea - usedArea) / totalArea) * 100;
+        let wastePercentRounded = wastePercent.toFixed(2); // 四捨五入到小數點後兩位
+
+        let normalRows = Math.floor(materialHeight / pieceHeight);
+        let normalColumns = Math.floor(materialWidth / pieceWidth);
+        let normalPieces = normalRows * normalColumns;
+        let normalConfig = `每張板材切成 ${normalRows} 列、每列 ${normalColumns} 片，總共 ${normalPieces} 片（不轉向）。`;
+
+        console.log("📏 測試參數印出：");
+        console.log("materialHeight:", materialHeight);
+        console.log("materialWidth:", materialWidth);
+        console.log("pieceHeight:", pieceHeight);
+        console.log("pieceWidth:", pieceWidth);
+        console.log("normalRows:", normalRows);
+        console.log("normalColumns:", normalColumns);
+        console.log("normalPieces:", normalPieces);
+        console.log("normalConfig:", normalConfig);
+
+        document.getElementById("cuttingResult").innerText = `
+            普通切割方式（不轉向）：每張板材可切 ${normalPieces} 片。
+            切割方案：${normalConfig}\n
+            最佳切割方式：每張板材可切 ${bestResult.maxPieces} 片。
+            切割方案：${bestResult.bestConfig}\n
+            材料浪費：${wastePercentRounded}%`;
+
+        return bestResult.maxPieces;
+      }
+
+      function calculateCutting() {
+        if (!checkFileUpload()) return;
+        const materialWidth =
+          parseInt(document.getElementById("materialWidth").value) || 0;
+        const materialHeight =
+          parseInt(document.getElementById("materialHeight").value) || 0;
+        let pieceWidth =
+          parseFloat(document.getElementById("width").value) || 0;
+        let pieceHeight =
+          parseFloat(document.getElementById("length").value) || 0;
+
+        if (pieceWidth <= 0 || pieceHeight <= 0) {
+          document.getElementById("cuttingResult").innerText =
+            "請輸入有效的長度和寬度。";
+          return 0;
+        }
+        if (pieceWidth > pieceHeight) {
+          let temp = pieceWidth;
+          pieceWidth = pieceHeight;
+          pieceHeight = temp;
+        }
+
+        function getBestCut(
+          materialWidth,
+          materialHeight,
+          pieceWidth,
+          pieceHeight
+        ) {
+          let maxPieces = 0;
+          let bestConfig = "";
+
+          for (let i = 0; i <= Math.floor(materialHeight / pieceHeight); i++) {
+            let firstCutRows = i;
+            let remainingHeight = materialHeight - firstCutRows * pieceHeight;
+            let firstCutColumns = Math.floor(materialWidth / pieceWidth);
+            let secondCutRows = Math.floor(remainingHeight / pieceWidth);
+            let secondCutColumns = Math.floor(materialWidth / pieceHeight);
+
+            let totalPieces =
+              firstCutRows * firstCutColumns + secondCutRows * secondCutColumns;
+            if (totalPieces > maxPieces) {
+              maxPieces = totalPieces;
+              bestConfig = `先切 ${firstCutRows} 列，每列 ${firstCutColumns} 片，剩餘高度再切 ${secondCutRows} 列，每列 ${secondCutColumns} 片。`;
+            }
+          }
+          return { maxPieces, bestConfig };
+        }
+
+        let result1 = getBestCut(
+          materialWidth,
+          materialHeight,
+          pieceWidth,
+          pieceHeight
+        );
+        let result2 = getBestCut(
+          materialHeight,
+          materialWidth,
+          pieceWidth,
+          pieceHeight
+        );
+        let bestResult =
+          result1.maxPieces >= result2.maxPieces ? result1 : result2;
+
+        let totalArea = materialWidth * materialHeight;
+        let usedArea = pieceWidth * pieceHeight * bestResult.maxPieces;
+        let wastePercent = ((totalArea - usedArea) / totalArea) * 100;
+        let wastePercentRounded = wastePercent.toFixed(2); // 四捨五入到小數點後兩位
+
+        // let normalRows = Math.floor(materialHeight / pieceHeight);
+        // let normalColumns = Math.floor(materialWidth / pieceWidth);
+        // let normalPieces = normalRows * normalColumns;
+
+        // ➤ 模擬兩種排法（直式 or 橫式）
+        function getNormalCutPieces(mw, mh, pw, ph) {
+          let rows = Math.floor(mh / ph);
+          let cols = Math.floor(mw / pw);
+          return { pieces: rows * cols, rows, cols };
+        }
+
+        // ➤ 第一種：用原方向切
+        let cutA = getNormalCutPieces(
+          materialWidth,
+          materialHeight,
+          pieceWidth,
+          pieceHeight
+        );
+
+        // ➤ 第二種：旋轉90度切
+        let cutB = getNormalCutPieces(
+          materialWidth,
+          materialHeight,
+          pieceHeight,
+          pieceWidth
+        );
+
+        // ➤ 比較哪一種切出更多
+        let normalRows, normalColumns, normalPieces;
+        if (cutA.pieces >= cutB.pieces) {
+          normalRows = cutA.rows;
+          normalColumns = cutA.cols;
+          normalPieces = cutA.pieces;
+        } else {
+          normalRows = cutB.rows;
+          normalColumns = cutB.cols;
+          normalPieces = cutB.pieces;
+        }
+        let normalConfig = `每張片材切成 ${normalRows} 列、每列 ${normalColumns} pcs，總共 ${normalPieces} pcs（不轉向）。`;
+        console.log("📏 測試參數印出：");
+        console.log("materialHeight:", materialHeight);
+        console.log("materialWidth:", materialWidth);
+        console.log("pieceHeight:", pieceHeight);
+        console.log("pieceWidth:", pieceWidth);
+        console.log("normalRows:", normalRows);
+        console.log("normalColumns:", normalColumns);
+        console.log("normalPieces:", normalPieces);
+        console.log("normalConfig:", normalConfig);
+
+        document.getElementById("cuttingResult").innerText = `
+            普通切割方式（不轉向）：每張片材可切 ${normalPieces} pcs。
+            切割方案：${normalConfig}\n
+            最佳切割方式：每張片材可切 ${bestResult.maxPieces} pcs。
+            切割方案：${bestResult.bestConfig}\n
+            片材材料浪費：${wastePercentRounded}%`;
+
+        return bestResult.maxPieces;
+      }
+
+      function calculatePrice() {
+        if (!checkFileUpload()) return;
+
+        // === 1. 基本資料 ===
+        let unitPrice =
+          parseFloat(document.getElementById("unitPrice").value) || 0; // 單價
+        let freight = parseFloat(document.getElementById("freight").value) || 0; // 運費
+        let fee = parseFloat(document.getElementById("fee").value) || 0; // 其他費用
+        let taxe = parseFloat(document.getElementById("taxe").value) || 0; // 稅金
+        let quantity = parseInt(document.getElementById("quantity").value) || 0; // 小片數量（顧客要幾片）
+
+        let bestCut = calculateCutting1(); // 一大片可以切幾小片
+        if (bestCut === 0) return;
+        let materialWidth =
+          parseInt(document.getElementById("materialWidth").value) || 0;
+        let materialHeight =
+          parseInt(document.getElementById("materialHeight").value) || 0;
+        let pieceWidth, pieceHeight;
+        let isIrregular = document.getElementById("irregular").checked;
+        if (isIrregular) {
+          pieceWidth =
+            parseFloat(document.getElementById("maxWidth").value) || 0;
+          pieceHeight =
+            parseFloat(document.getElementById("maxLength").value) || 0;
+          pieceWidth += 2;
+          pieceHeight += 2;
+        } else {
+          pieceWidth = parseFloat(document.getElementById("width").value) || 0;
+          pieceHeight =
+            parseFloat(document.getElementById("length").value) || 0;
+        }
+        // ➤ 模擬兩種排法（直式 or 橫式）
+        function getNormalCutPieces(mw, mh, pw, ph) {
+          let rows = Math.floor(mh / ph);
+          let cols = Math.floor(mw / pw);
+          return { pieces: rows * cols, rows, cols };
+        }
+
+        // ➤ 第一種：用原方向切
+        let cutA = getNormalCutPieces(
+          materialWidth,
+          materialHeight,
+          pieceWidth,
+          pieceHeight
+        );
+
+        // ➤ 第二種：旋轉90度切
+        let cutB = getNormalCutPieces(
+          materialWidth,
+          materialHeight,
+          pieceHeight,
+          pieceWidth
+        );
+
+        // ➤ 比較哪一種切出更多
+        let normalRows, normalColumns, normalPieces;
+        if (cutA.pieces >= cutB.pieces) {
+          normalRows = cutA.rows;
+          normalColumns = cutA.cols;
+          normalPieces = cutA.pieces;
+        } else {
+          normalRows = cutB.rows;
+          normalColumns = cutB.cols;
+          normalPieces = cutB.pieces;
+        }
+
+        let bigSheetQuantity = Math.ceil(quantity / normalPieces); // 需要的大片數量
+        let bigSheetQuantitypoint =
+          Math.round((quantity / normalPieces) * 100) / 100;
+        let smallPieceQuantity = quantity; // 小片數量
+
+        // === 2. 加上表面不黏/背膠費（每大片）===
+        let normalGlueChecked = document.getElementById("normalGlue").checked;
+        let specialGlueChecked = document.getElementById("specialGlue").checked;
+        let glueCost = 0;
+        if (normalGlueChecked && specialGlueChecked) {
+          alert("只能選擇一種背膠！");
+          return;
+        }
+        if (normalGlueChecked) glueCost = 30;
+        if (specialGlueChecked) glueCost = 45;
+
+        let notstickCost = document.getElementById("notstick").checked ? 40 : 0;
+
+        // 每一大片基本價格
+        let singleBigSheetPrice = unitPrice + glueCost + notstickCost;
+
+        // === 3. 小片加工費 ===
+        let drillCostPerPiece = document.getElementById("drill").checked
+          ? 0.2
+          : 0;
+
+        let stickerCostPerPrice = document.getElementById("sticker").checked
+          ? 0.4
+          : 0;
+
+        // === 4. 刀模費用 ===
+        let knifeMoldChecked =
+          document.getElementById("knifeMoldCheck").checked;
+        let knifeMoldCost = knifeMoldChecked
+          ? parseFloat(document.getElementById("knifeMoldPrice").value) || 0
+          : 0;
+
+        // === 5. 折扣 ===
+        let discount =
+          parseFloat(document.getElementById("discount").value) || 1;
+
+        // === 6. 照你的新公式計算 totalPrice ===
+        let subtotalBeforeDiscount =
+          singleBigSheetPrice * bigSheetQuantitypoint +
+          smallPieceQuantity * drillCostPerPiece +
+          smallPieceQuantity * stickerCostPerPrice;
+        let subtotalAfterDiscount = subtotalBeforeDiscount * discount;
+        let totalPrice1 = subtotalAfterDiscount; // 不含出口費之單PCS價格
+        let totalPrice = subtotalAfterDiscount + freight + fee + taxe; // 含出口費之總價
+
+        // === 7. 單片價格 ===
+        let materialCostPerPiece = totalPrice / smallPieceQuantity; // 含出口費之單pcs價格
+        let materialCostPerPiece1 = totalPrice1 / smallPieceQuantity; // 不含出口費之單pcs價格
+
+        document.getElementById("totalPrice").innerText =
+          Math.round(totalPrice).toString();
+
+        document.getElementById("totalPrice1").innerText =
+          Math.round(totalPrice1).toString();
+
+        document.getElementById("materialCostPerPiece").innerText =
+          materialCostPerPiece.toFixed(4);
+
+        document.getElementById("materialCostPerPiece1").innerText =
+          materialCostPerPiece1.toFixed(4);
+
+        // **取得基本資料**
+        let companyName =
+          document.getElementById("companyName").value || "未填寫";
+        let industryType =
+          document.getElementById("industryType").value || "未填寫";
+        let isCompetitor =
+          document.querySelector('input[name="isCompetitor"]:checked')?.value ||
+          "未選擇";
+        let competitorName =
+          document.getElementById("OtherCompetitorName").value || "未填寫";
+        if (isCompetitor === "是") {
+          isCompetitor += `（競爭對手：${competitorName}）`;
+        }
+        let quoteDetailsDiv = document.getElementById("quoteDetails");
+        if (quoteDetailsDiv) {
+          quoteDetailsDiv.innerHTML = `
+              	<p><strong>公司名稱：</strong> ${companyName}</p>
+              	<p><strong>行業別：</strong> ${industryType}</p>
+              	<p><strong>是否有競爭對手：</strong> ${isCompetitor}</p>
+          	`;
+        } else {
+          console.error("❌ 無法找到 #quoteDetails，請確認 HTML 結構！");
+        }
+        // === 10. 顯示計算公式說明 ===
+        let calculationExplanationDiv = document.getElementById(
+          "calculationExplanation"
+        );
+
+        if (calculationExplanationDiv) {
+          calculationExplanationDiv.innerHTML = `
+
+        <p><strong>片材使用數量：</strong> ${quantity} / ${normalPieces} = ${bigSheetQuantitypoint}
+        <p><strong>不含費用之單pcs價格：</strong>
+          [(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCostPerPiece}) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount} / ${smallPieceQuantity}
+          = <strong>${materialCostPerPiece1.toFixed(4)}</strong> 元
+        </p>
+
+        <p><strong>含費用之單pcs價格：</strong>
+          [(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCostPerPiece}) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount} + 出口費 ${fee} + 報關費 ${freight} + 目的地費 ${taxe}) / ${smallPieceQuantity}
+          = <strong>${materialCostPerPiece.toFixed(4)}</strong> 元
+        </p>
+
+        <p><strong>不含費用之總價：</strong>
+          [(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCostPerPiece}) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount})
+          = <strong>${Math.round(totalPrice1)}</strong> 元
+        </p>
+
+        <p><strong>含費用之總價：</strong>
+          [(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCostPerPiece}) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount} + 出口費 ${fee} + 報關費 ${freight} + 目的地費 ${taxe})
+          = <strong>${Math.round(totalPrice)}</strong> 元
+        </p>
+      `;
+        } else {
+          console.error(
+            "❌ 無法找到 #calculationExplanation，請確認 HTML 結構！"
+          );
+        }
+        updateShippingFeeAndUnitCost();
+      }
+
+      function toggleOtherInput() {
+        let otherCheckbox = document.getElementById("other");
+        let otherTextInput = document.getElementById("otherText");
+        if (otherCheckbox.checked) {
+          otherTextInput.classList.remove("hidden");
+        } else {
+          otherTextInput.classList.add("hidden");
+          otherTextInput.value = "";
+        }
+      }
+
+      function checkFileUpload() {
+        let shape = document.querySelector('input[name="shape"]:checked').value;
+        let fileInput = document.getElementById("fileUpload");
+        if (shape === "irregular" && fileInput.files.length === 0) {
+          alert("請上傳不規則形狀的檔案以及確認刀模費用！");
+          return false;
+        }
+        return true;
+      }
+      let rowIndex = 1; // 初始序號
+
+      function addToTable() {
+        let table = document
+          .getElementById("quoteTable")
+          .getElementsByTagName("tbody")[0];
+
+        // ========== 料號資訊 ==========
+        let item = document.getElementById("item").value || "未填寫";
+        let yearUsage = document.getElementById("year").value || "0";
+        let moq = document.getElementById("MOQ").value || "未填寫";
+        let discount = document.getElementById("discount").value || "1";
+        let pcsPrice =
+          document.getElementById("materialCostPerPiece").innerText || "0";
+        let pcsPrice1 =
+          document.getElementById("materialCostPerPiece1").innerText || "0";
+        let totalPrice = document.getElementById("totalPrice").innerText || "0";
+        let totalPrice1 =
+          document.getElementById("totalPrice1").innerText || "0";
+        // let totalPrice = document.getElementById("totalPrice").innerText; // document.getElementById("totalPrice").innerText || "0";
+        let unitPrice = document.getElementById("unitPrice").value || "0";
+
+        // ========== 運費資訊 ==========
+        // let freight = document.getElementById("freight").value || "0";
+        // // let fee = document.getElementById("fee").value || "0";
+        // let taxe = document.getElementById("taxe").value || "0";
+        let quantity = document.getElementById("quantity").value || "0";
+        // ========== 尺寸處理 ==========
+        let shape = document.querySelector('input[name="shape"]:checked').value;
+        let sizeText = "";
+        if (shape === "rectangle") {
+          let length = document.getElementById("length").value || "未填寫";
+          let width = document.getElementById("width").value || "未填寫";
+          let thickness = document.getElementById("height").value || "未填寫";
+          sizeText = `${length} x ${width} x ${thickness}`;
+        } else {
+          let maxLength =
+            document.getElementById("maxLength").value || "未填寫";
+          let maxWidth = document.getElementById("maxWidth").value || "未填寫";
+          let maxHeight =
+            document.getElementById("maxHeight").value || "未填寫";
+          sizeText = `${maxLength} x ${maxWidth} x ${maxHeight} (不規則)`;
+        }
+        // ========== 板材尺寸 ==========
+        let materialWidth =
+          document.getElementById("materialWidth").value || "未填寫";
+        let materialHeight =
+          document.getElementById("materialHeight").value || "未填寫";
+        let materialSizeText = `${materialWidth} x ${materialHeight}`;
+
+        // ========== 特殊加工 ==========
+        let specialProcessing = [];
+        if (document.getElementById("sticker").checked)
+          specialProcessing.push("拉拔 (+0.4/pcs)");
+        if (document.getElementById("drill").checked)
+          specialProcessing.push("挖洞 (+0.2/孔)");
+        if (document.getElementById("notstick").checked)
+          specialProcessing.push("表面不黏 (+40/片)");
+        let knifeMoldChecked =
+          document.getElementById("knifeMoldCheck").checked;
+        let knifeMoldCost = 0;
+
+        if (knifeMoldChecked) {
+          knifeMoldCost =
+            parseFloat(document.getElementById("knifeMoldPrice").value) || 0;
+        }
+
+        let specialText =
+          specialProcessing.length > 0 ? specialProcessing.join("、") : "無";
+
+        // ========== 背膠 ==========
+        let glueText = "不背膠";
+        if (document.getElementById("normalGlue").checked)
+          glueText = "普通膠 (+30/片)";
+        if (document.getElementById("specialGlue").checked)
+          glueText = "指定膠 (+45/片)";
+
+        // ========== 新增一行 ==========
+        let newRow = table.insertRow();
+        newRow.insertCell(0).innerText = rowIndex++; // 序號
+        newRow.insertCell(1).innerText = `${item} / ${quantity} / ${sizeText}`; // 品項/數量/尺寸
+        newRow.insertCell(2).innerText = yearUsage; // 年用量
+        newRow.insertCell(3).innerText = moq; // MOQ
+        newRow.insertCell(4).innerText = discount; // 折數
+        newRow.insertCell(5).innerText = specialText; // 特殊加工
+        newRow.insertCell(6).innerText = glueText; // 背膠
+        newRow.insertCell(7).innerText = knifeMoldCost.toString(); // 刀模費用
+        newRow.insertCell(8).innerText = pcsPrice1; // 1pcs價格
+        newRow.insertCell(9).innerText = pcsPrice; // 1pcs價格
+        newRow.insertCell(10).innerText = totalPrice1; // 總價
+        newRow.insertCell(11).innerText = totalPrice; // 總價
+        newRow.insertCell(12).innerText = pcsPrice; // 出口占比（暫用）
+        newRow.insertCell(13).innerText = materialSizeText; // 片材尺寸
+        let actionsCell = newRow.insertCell(14);
+        actionsCell.innerHTML = `
+            <button onclick="editRow(this)">編輯</button>
+            <button onclick="deleteRow(this)">刪除</button>
+          `;
+        let unitCell = newRow.insertCell(15);
+        unitCell.innerText = unitPrice;
+        unitCell.style.display = "none";
+        clearFormInputs();
+        updateShippingFeeAndUnitCost();
+      }
+      function editRow(button) {
+        let row = button.parentNode.parentNode; // 找到整列
+        let table = document
+          .getElementById("quoteTable")
+          .getElementsByTagName("tbody")[0]; // ← 加上這一段
+
+        let cells = row.getElementsByTagName("td");
+
+        // 還原板材尺寸
+        let materialSizeParts = cells[14].innerText.split("x"); // "320 x 320"
+        if (materialSizeParts.length === 2) {
+          let width = materialSizeParts[0].trim();
+          let height = materialSizeParts[1].trim();
+
+          // 自動選擇 dropdown
+          let select = document.getElementById("materialSize");
+          if (width === "320" && height === "320") {
+            select.value = "320x320";
+          } else if (width === "640" && height === "640") {
+            select.value = "640x640";
+          } else {
+            select.value = "custom";
+          }
+
+          // 再呼叫 updateMaterialInput 讓 disabled 正確更新
+          updateMaterialInput();
+
+          // 🟢 最後才設值（確保 custom 模式時欄位是 enabled）
+          document.getElementById("materialWidth").value = width;
+          document.getElementById("materialHeight").value = height;
+        }
+
+        // 讀回資料填到表單
+        let itemSize = cells[1].innerText.split(" / ");
+        document.getElementById("item").value = itemSize[0] || "";
+
+        let sizeParts = itemSize[1] ? itemSize[1].split("x") : [];
+        if (sizeParts.length >= 3) {
+          document.getElementById("length").value = sizeParts[0].trim();
+          document.getElementById("width").value = sizeParts[1].trim();
+          document.getElementById("height").value = sizeParts[2].trim();
+        }
+
+        document.getElementById("year").value = cells[2].innerText || "";
+        document.getElementById("MOQ").value = cells[3].innerText || "";
+        document.getElementById("discount").value = cells[4].innerText || "";
+        document.getElementById("materialCostPerPiece").innerText =
+          cells[8].innerText || "0";
+        document.getElementById("materialCostPerPiece1").value =
+          cells[9].innerText || "0";
+        // //document.getElementById("fee").value = cells[9].innerText || "";
+        document.getElementById("totalPrice").innerText =
+          cells[10].innerText || "0";
+        document.getElementById("totalPrice1").value =
+          cells[11].innerText || "0";
+        document.getElementById("quantity").value = itemSize[1].trim(); // ← 補上數量欄位
+        document.getElementById("unitPrice").value = cells[15].innerText || "0";
+        // 判斷特殊加工勾選
+        let special = cells[5].innerText;
+        document.getElementById("sticker").checked = special.includes("拉拔");
+        document.getElementById("drill").checked = special.includes("挖洞");
+        document.getElementById("notstick").checked =
+          special.includes("表面不黏");
+
+        // 判斷背膠勾選
+        let glue = cells[6].innerText;
+        document.getElementById("normalGlue").checked = glue.includes("普通膠");
+        document.getElementById("specialGlue").checked =
+          glue.includes("指定膠");
+        document.getElementById("noGlue").checked = glue.includes("不背膠");
+        // 偵測是否為不規則形狀
+        const sizeText = itemSize[2]?.trim() || ""; // ex: "10 x 20 x 3 (不規則)"
+        const isIrregular = sizeText.includes("不規則");
+
+        // 還原 radio
+        document.getElementById("rectangle").checked = !isIrregular;
+        document.getElementById("irregular").checked = isIrregular;
+        toggleShape(); // 顯示對應欄位區塊
+
+        if (isIrregular) {
+          // 若是不規則，就還原 maxLength/maxWidth/maxHeight
+          let irregularParts = sizeText.replace(" (不規則)", "").split("x");
+          if (irregularParts.length >= 3) {
+            document.getElementById("maxLength").value =
+              irregularParts[0].trim();
+            document.getElementById("maxWidth").value =
+              irregularParts[1].trim();
+            document.getElementById("maxHeight").value =
+              irregularParts[2].trim();
+          }
+
+          // 刀模費用開關與數值（看你有無存進表格）
+          const knifeMoldText = cells[5].innerText; // 或其他地方
+          const knifeMoldIncluded = knifeMoldText.includes("刀模");
+          document.getElementById("knifeMoldCheck").checked = knifeMoldIncluded;
+          toggleKnifeMoldInput(); // 顯示或隱藏 input
+          // 刀模費用處理（直接讀 index 7 的純數字欄）
+          let knifeMoldCost = parseFloat(cells[7].innerText) || 0;
+          document.getElementById("knifeMoldCheck").checked = knifeMoldCost > 0;
+          document.getElementById("knifeMoldPrice").value = knifeMoldCost;
+          toggleKnifeMoldInput();
+        } else {
+          // 是長方形，就還原 length/width/height
+          let sizeParts = sizeText.split("x");
+          if (sizeParts.length >= 3) {
+            document.getElementById("length").value = sizeParts[0].trim();
+            document.getElementById("width").value = sizeParts[1].trim();
+            document.getElementById("height").value = sizeParts[2].trim();
+          }
+        }
+        // 編輯後刪除這一列，讓使用者重新送出
+        table.deleteRow(row.rowIndex - 1);
+      }
+
+      function deleteRow(button) {
+        let row = button.parentNode.parentNode;
+        let table = document
+          .getElementById("quoteTable")
+          .getElementsByTagName("tbody")[0];
+        table.deleteRow(row.rowIndex - 1);
+        updateShippingFeeAndUnitCost();
+      }
+      function toggleShape() {
+        const isRectangle = document.getElementById("rectangle").checked;
+        document
+          .getElementById("rectInputs")
+          .classList.toggle("hidden", !isRectangle);
+        document
+          .getElementById("irregularInputs")
+          .classList.toggle("hidden", isRectangle);
+      }
+      function clearFormInputs() {
+        document.getElementById("item").value = "";
+        document.getElementById("unitPrice").value = "";
+        document.getElementById("year").value = "";
+        document.getElementById("discount").value = "";
+        document.getElementById("MOQ").value = "";
+        document.getElementById("materialCostPerPiece").innerText = "0";
+        document.getElementById("totalPrice").innerText = "0";
+        document.getElementById("quantity").value = "";
+
+        // 清空長方形輸入
+        document.getElementById("length").value = "";
+        document.getElementById("width").value = "";
+        document.getElementById("height").value = "";
+
+        // 清空不規則形狀輸入
+        document.getElementById("maxLength").value = "";
+        document.getElementById("maxWidth").value = "";
+        document.getElementById("maxHeight").value = "";
+
+        // 清空上傳檔案
+        document.getElementById("fileUpload").value = "";
+
+        // 取消勾選所有 checkbox
+        document.getElementById("sticker").checked = false;
+        document.getElementById("drill").checked = false;
+        document.getElementById("notstick").checked = false;
+        document.getElementById("normalGlue").checked = false;
+        document.getElementById("specialGlue").checked = false;
+
+        // 取消刀模選項
+        document.getElementById("knifeMoldCheck").checked = false;
+        document.getElementById("knifeMoldPrice").value = "";
+        document.getElementById("knifeMoldPrice").classList.add("hidden");
+
+        // 恢復選擇長方形
+        document.getElementById("rectangle").checked = true;
+        document.getElementById("rectInputs").classList.remove("hidden");
+        document.getElementById("irregularInputs").classList.add("hidden");
+
+        // 清空相關費用
+        // document.getElementById("taxe").value = "";
+        // //document.getElementById("fee").value = "";
+        // document.getElementById("freight").value = "";
+      }
+
+      function exportToExcel() {
+        const table = document.getElementById("quoteTable");
+        const rows = Array.from(table.rows);
+        const exportData = [];
+
+        // 1️⃣ 擷取主表格資料（取前 12 欄）
+        rows.forEach((row) => {
+          const cells = Array.from(row.cells);
+          const cleanRow = cells.slice(0, 13).map((cell) => cell.innerText);
+          exportData.push(cleanRow);
+        });
+
+        // 2️⃣ 擷取基本資料欄位
+        const companyName = document.getElementById("companyName").value || "";
+        const listedCompany =
+          document.querySelector('input[name="listedCompany"]:checked')
+            ?.value || "";
+        const industryType =
+          document.getElementById("industryType").value || "";
+        const isCompetitor =
+          document.querySelector('input[name="isCompetitor"]:checked')?.value ||
+          "";
+        const competitorName =
+          isCompetitor === "是"
+            ? document.getElementById("OtherCompetitorName").value || ""
+            : "";
+
+        // 3️⃣ 基本資料表頭 + 資料列，先建成兩列
+        const baseInfoHeader = []; // 第 1 列（O欄起）
+        const baseInfoRow = []; // 第 2 列（O欄起）
+
+        // 補齊前14欄（A～N空白）
+        for (let i = 0; i < 14; i++) {
+          baseInfoHeader.push("");
+          baseInfoRow.push("");
+        }
+
+        // O～S欄資料
+        baseInfoHeader.push(
+          "公司名稱",
+          "上市櫃",
+          "產業別",
+          "是否有競爭對手",
+          "對手公司"
+        );
+        baseInfoRow.push(
+          companyName,
+          listedCompany,
+          industryType,
+          isCompetitor,
+          competitorName
+        );
+        updateShippingFeeAndUnitCost();
+        // 插入最上方
+        exportData.unshift(baseInfoRow);
+        exportData.unshift(baseInfoHeader);
+
+        // 4️⃣ 匯出
+        const ws = XLSX.utils.aoa_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "報價單");
+        XLSX.writeFile(wb, "報價單.xlsx");
+      }
+
+      // function updateShippingFeeAndUnitCost() {
+      //   const table = document
+      //     .getElementById("quoteTable")
+      //     .getElementsByTagName("tbody")[0];
+      //   const rows = table.getElementsByTagName("tr");
+
+      //   let totalQuantity = 0;
+      //   let freight = parseFloat(document.getElementById("freight").value) || 0;
+      //   let taxe = parseFloat(document.getElementById("taxe").value) || 0;
+      //   let fee = parseFloat(document.getElementById("fee").value) || 0;
+      //   let shippingFee = freight + taxe + fee;
+
+      //   // 第一步：計算總數量
+      //   for (let row of rows) {
+      //     const cellText = row.cells[1].innerText; // 品項/數量/尺寸
+      //     const parts = cellText.split("/");
+      //     if (parts.length >= 2) {
+      //       const quantity = parseInt(parts[1].trim()) || 0;
+      //       totalQuantity += quantity;
+      //     }
+      //   }
+
+      //   // 第二步：平均分攤運費到每個品項
+      //   for (let row of rows) {
+      //     const unitPrice = parseFloat(row.cells[7].innerText) || 0; // 原本的 1pcs價格
+      //     const cellText = row.cells[1].innerText;
+      //     const parts = cellText.split("/");
+      //     const quantity =
+      //       parts.length >= 2 ? parseInt(parts[1].trim()) || 0 : 0;
+
+      //     const shippingPerPiece =
+      //       totalQuantity > 0 ? shippingFee / totalQuantity : 0;
+      //     const unitPriceWithShippingNum = unitPrice + shippingPerPiece;
+      //     const unitPriceWithShipping = unitPriceWithShippingNum.toFixed(2); // 顯示用
+      //     const priceWithShipping = (
+      //       unitPriceWithShippingNum * quantity
+      //     ).toFixed(2); // 計算用 + 顯示用
+      //     const Freight_ratio =
+      //       unitPriceWithShippingNum > 0
+      //         ? ((shippingPerPiece / unitPriceWithShippingNum) * 100).toFixed(
+      //             1
+      //           ) + "%"
+      //         : "0%";
+
+      //     row.cells[8].innerText = unitPriceWithShipping; // 第9欄：單價(含運)
+      //     row.cells[10].innerText = priceWithShipping; // 第11欄：總價(含運)
+      //     row.cells[11].innerText = Freight_ratio;
+      //   }
+      // }
+      function updateShippingFeeAndUnitCost() {
+        const table = document
+          .getElementById("quoteTable")
+          .getElementsByTagName("tbody")[0];
+        const rows = table.getElementsByTagName("tr");
+
+        // 1. 取得出口費用總和
+        const freight =
+          parseFloat(document.getElementById("freight").value) || 0;
+        const taxe = parseFloat(document.getElementById("taxe").value) || 0;
+        const fee = parseFloat(document.getElementById("fee").value) || 0;
+        const shippingFee = freight + taxe + fee;
+
+        // 2. 計算總數量
+        let totalQuantity = 0;
+        for (let row of rows) {
+          const cellText = row.cells[1].innerText; // 品項/數量/尺寸
+          const parts = cellText.split("/");
+          if (parts.length >= 2) {
+            const quantity = parseInt(parts[1].trim()) || 0;
+            totalQuantity += quantity;
+          }
+        }
+
+        // 3. 平均分攤運費後更新每一列
+        for (let row of rows) {
+          const unitPrice = parseFloat(row.cells[8].innerText) || 0; // 原始單PCS價格（不含運）
+          const cellText = row.cells[1].innerText;
+          const parts = cellText.split("/");
+          const quantity =
+            parts.length >= 2 ? parseInt(parts[1].trim()) || 0 : 0;
+
+          const shippingPerPiece =
+            totalQuantity > 0 ? shippingFee / totalQuantity : 0;
+
+          const unitPriceWithShippingNum = unitPrice + shippingPerPiece;
+          const unitPriceWithShipping = unitPriceWithShippingNum.toFixed(2);
+          const totalPrice = (unitPrice * quantity).toFixed(2);
+          const totalPriceWithShipping = (
+            unitPriceWithShippingNum * quantity
+          ).toFixed(2);
+
+          const Freight_ratio =
+            unitPrice > 0
+              ? ((shippingPerPiece / unitPrice) * 100).toFixed(1) + "%"
+              : "0%";
+
+          // 更新欄位
+          row.cells[9].innerText = unitPriceWithShipping; // 第10欄：含運單PCS價格
+          row.cells[11].innerText = totalPriceWithShipping; // 第12欄：含運總價
+          row.cells[12].innerText = Freight_ratio; // 第13欄：出口費用占比
+        }
+      }
+
+      function toggleCompetitorInput() {
+        let isCompetitorYes =
+          document.getElementById("isCompetitorYes").checked;
+        let competitorContainer = document.getElementById(
+          "competitorContainer"
+        );
+
+        if (isCompetitorYes) {
+          competitorContainer.classList.add("visible");
+        } else {
+          competitorContainer.classList.remove("visible");
+          document.getElementById("OtherCompetitorName").value = ""; // 清空輸入框
+        }
+      }
+    </script>
+  </body>
+</html>
