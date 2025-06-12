@@ -411,7 +411,7 @@
       <div class="section">
         <h3>📌 特殊加工</h3>
         <div class="checkbox-group">
-          <input type="checkbox" id="sticker" value="0.4" /> 拉拔 (+0.4/孔)
+          <input type="checkbox" id="sticker" value="0.4" /> 拉拔 (+0.4/pcs)
           <input type="checkbox" id="drill" value="0.2" /> 挖洞 (+0.2/孔)
           <input type="checkbox" id="notstick" value="40" /> 表面不黏 (+40/片)
         </div>
@@ -1467,9 +1467,9 @@
           const unitPriceWithShippingNum = unitPrice + shippingPerPiece;
           const unitPriceWithShipping = unitPriceWithShippingNum.toFixed(2);
           const totalPrice = (unitPrice * quantity).toFixed(2);
-          const totalPriceWithShipping = (
+          const totalPriceWithShipping = Math.round(
             unitPriceWithShippingNum * quantity
-          ).toFixed(2);
+          );
 
           const Freight_ratio =
             unitPrice > 0
