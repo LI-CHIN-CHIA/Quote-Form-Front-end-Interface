@@ -354,7 +354,7 @@
               id="irregular"
               onclick="toggleShape()"
             />
-            <label for="irregular">不規則形狀(+2mm)</label>
+            <label for="irregular">不規則形狀(需留間隔)</label>
           </div>
         </div>
 
@@ -412,8 +412,26 @@
         <h3>📌 特殊加工</h3>
         <div class="checkbox-group">
           <input type="checkbox" id="sticker" value="0.4" /> 拉拔 (+0.4/pcs)
-          <input type="checkbox" id="drill" value="0.2" /> 挖洞 (+0.2/孔)
           <input type="checkbox" id="notstick" value="40" /> 表面不黏 (+40/片)
+          <input
+            type="checkbox"
+            id="drill"
+            value="0.2"
+            onchange="toggleDrillInput()"
+          />
+          挖洞 (+0.2/孔)
+
+          <!-- 隱藏的洞數輸入欄位 -->
+          <div id="drillCountWrapper" style="display: none; margin-left: 20px">
+            <label for="drillCount">請輸入挖幾個洞：</label>
+            <input
+              type="number"
+              id="drillCount"
+              min="1"
+              value="1"
+              style="width: 60px"
+            />
+          </div>
         </div>
       </div>
 
@@ -533,6 +551,17 @@
         });
       });
 
+      function toggleDrillInput() {
+        const drillCheckbox = document.getElementById("drill");
+        const drillCountWrapper = document.getElementById("drillCountWrapper");
+
+        if (drillCheckbox.checked) {
+          drillCountWrapper.style.display = "block";
+        } else {
+          drillCountWrapper.style.display = "none";
+        }
+      }
+
       function toggleKnifeMoldInput() {
         let knifeMoldCheck = document.getElementById("knifeMoldCheck");
         let knifeMoldPrice = document.getElementById("knifeMoldPrice");
@@ -597,10 +626,15 @@
             bestCut = calculateCutting();
           }
         } else {
+          let maxHeight =
+            parseFloat(document.getElementById("maxHeight").value) || 0;
+          let offset = maxHeight < 2 ? 2 : maxHeight;
           let maxLength =
-            (parseFloat(document.getElementById("maxLength").value) || 0) + 2;
+            (parseFloat(document.getElementById("maxLength").value) || 0) +
+            offset;
           let maxWidth =
-            (parseFloat(document.getElementById("maxWidth").value) || 0) + 2;
+            (parseFloat(document.getElementById("maxWidth").value) || 0) +
+            offset;
           if (maxLength > 1 && maxWidth > 1) {
             bestCut = calculateCutting2();
           }
@@ -614,10 +648,14 @@
           parseInt(document.getElementById("materialWidth").value) || 0;
         const materialHeight =
           parseInt(document.getElementById("materialHeight").value) || 0;
+        let maxHeight =
+          parseFloat(document.getElementById("maxHeight").value) || 0;
+        let offset = maxHeight < 2 ? 2 : maxHeight;
         let pieceWidth =
-          2 + (parseFloat(document.getElementById("maxLength").value) || 0);
+          offset +
+          (parseFloat(document.getElementById("maxLength").value) || 0);
         let pieceHeight =
-          2 + (parseFloat(document.getElementById("maxWidth").value) || 0);
+          offset + (parseFloat(document.getElementById("maxWidth").value) || 0);
 
         if (pieceWidth <= 0 || pieceHeight <= 0) {
           document.getElementById("cuttingResult").innerText =
@@ -686,12 +724,26 @@
         console.log("normalPieces:", normalPieces);
         console.log("normalConfig:", normalConfig);
 
-        document.getElementById("cuttingResult").innerText = `
+        let isIrregular = document.getElementById("irregular").checked;
+        if (isIrregular) {
+          maxHeight =
+            parseFloat(document.getElementById("maxHeight").value) || 0;
+          let offset = maxHeight < 2 ? 2 : maxHeight;
+          document.getElementById("cuttingResult").innerText = `
+            不規則形狀間隔 ${offset}mm。
             普通切割方式（不轉向）：每張板材可切 ${normalPieces} 片。
             切割方案：${normalConfig}\n
             最佳切割方式：每張板材可切 ${bestResult.maxPieces} 片。
             切割方案：${bestResult.bestConfig}\n
             材料浪費：${wastePercentRounded}%`;
+        } else {
+          document.getElementById("cuttingResult").innerText = `
+            普通切割方式（不轉向）：每張板材可切 ${normalPieces} 片。
+            切割方案：${normalConfig}\n
+            最佳切割方式：每張板材可切 ${bestResult.maxPieces} 片。
+            切割方案：${bestResult.bestConfig}\n
+            材料浪費：${wastePercentRounded}%`;
+        }
 
         return bestResult.maxPieces;
       }
@@ -813,12 +865,26 @@
         console.log("normalPieces:", normalPieces);
         console.log("normalConfig:", normalConfig);
 
-        document.getElementById("cuttingResult").innerText = `
-            普通切割方式（不轉向）：每張片材可切 ${normalPieces} pcs。
+        let isIrregular = document.getElementById("irregular").checked;
+        if (isIrregular) {
+          maxHeight =
+            parseFloat(document.getElementById("maxHeight").value) || 0;
+          let offset = maxHeight < 2 ? 2 : maxHeight;
+          document.getElementById("cuttingResult").innerText = `
+            不規則形狀間隔 ${offset}mm。
+            普通切割方式（不轉向）：每張板材可切 ${normalPieces} 片。
             切割方案：${normalConfig}\n
-            最佳切割方式：每張片材可切 ${bestResult.maxPieces} pcs。
+            最佳切割方式：每張板材可切 ${bestResult.maxPieces} 片。
             切割方案：${bestResult.bestConfig}\n
-            片材材料浪費：${wastePercentRounded}%`;
+            材料浪費：${wastePercentRounded}%`;
+        } else {
+          document.getElementById("cuttingResult").innerText = `
+            普通切割方式（不轉向）：每張板材可切 ${normalPieces} 片。
+            切割方案：${normalConfig}\n
+            最佳切割方式：每張板材可切 ${bestResult.maxPieces} 片。
+            切割方案：${bestResult.bestConfig}\n
+            材料浪費：${wastePercentRounded}%`;
+        }
 
         return bestResult.maxPieces;
       }
@@ -840,15 +906,19 @@
           parseInt(document.getElementById("materialWidth").value) || 0;
         let materialHeight =
           parseInt(document.getElementById("materialHeight").value) || 0;
-        let pieceWidth, pieceHeight;
+        let pieceWidth, pieceHeight, maxHeight;
         let isIrregular = document.getElementById("irregular").checked;
+
         if (isIrregular) {
           pieceWidth =
             parseFloat(document.getElementById("maxWidth").value) || 0;
           pieceHeight =
             parseFloat(document.getElementById("maxLength").value) || 0;
-          pieceWidth += 2;
-          pieceHeight += 2;
+          maxHeight =
+            parseFloat(document.getElementById("maxHeight").value) || 0;
+          let offset = maxHeight < 2 ? 2 : maxHeight;
+          pieceWidth += offset;
+          pieceHeight += offset;
         } else {
           pieceWidth = parseFloat(document.getElementById("width").value) || 0;
           pieceHeight =
@@ -911,9 +981,17 @@
         let singleBigSheetPrice = unitPrice + glueCost + notstickCost;
 
         // === 3. 小片加工費 ===
-        let drillCostPerPiece = document.getElementById("drill").checked
-          ? 0.2
+        let drillCostPerHole = 0.2;
+        let drillChecked = document.getElementById("drill").checked;
+        let drillCount = drillChecked
+          ? parseInt(document.getElementById("drillCount").value) || 0
           : 0;
+
+        let drillCostPerPiece = drillChecked
+          ? drillCount * drillCostPerHole
+          : 0;
+
+        drillCostPerPiece = drillCostPerPiece.toFixed(1);
 
         let stickerCostPerPrice = document.getElementById("sticker").checked
           ? 0.4
@@ -1089,10 +1167,13 @@
         let specialProcessing = [];
         if (document.getElementById("sticker").checked)
           specialProcessing.push("拉拔 (+0.4/pcs)");
-        if (document.getElementById("drill").checked)
-          specialProcessing.push("挖洞 (+0.2/孔)");
         if (document.getElementById("notstick").checked)
           specialProcessing.push("表面不黏 (+40/片)");
+        if (document.getElementById("drill").checked) {
+          const drillCount =
+            parseInt(document.getElementById("drillCount").value) || 0;
+          specialProcessing.push(`挖洞 (+0.2/孔) x ${drillCount}孔`);
+        }
         let knifeMoldChecked =
           document.getElementById("knifeMoldCheck").checked;
         let knifeMoldCost = 0;
@@ -1199,7 +1280,36 @@
         // 判斷特殊加工勾選
         let special = cells[5].innerText;
         document.getElementById("sticker").checked = special.includes("拉拔");
-        document.getElementById("drill").checked = special.includes("挖洞");
+
+        const drillCheckbox = document.getElementById("drill");
+        const drillCountInput = document.getElementById("drillCount");
+        const drillCountWrapper = document.getElementById("drillCountWrapper");
+
+        // ❶ 先把 special 轉成真正的陣列
+        const specials = Array.isArray(special)
+          ? special
+          : typeof special === "string"
+          ? special.split(",").map((s) => s.trim())
+          : Array.from(special || []); // 若是 NodeList
+
+        // ❷ 判斷有沒有「挖洞」
+        const drillMatch = specials.find((item) => item.includes("挖洞"));
+
+        if (drillMatch) {
+          drillCheckbox.checked = true;
+
+          // 從字串抓出「x 3孔」裡面的 3
+          const m = drillMatch.match(/x\s*(\d+)\s*孔/);
+          drillCountInput.value = m ? parseInt(m[1], 10) : 1;
+
+          drillCountWrapper.style.display = "block";
+        } else {
+          // 取消並清理
+          drillCheckbox.checked = false;
+          drillCountInput.value = "";
+          drillCountWrapper.style.display = "none";
+        }
+
         document.getElementById("notstick").checked =
           special.includes("表面不黏");
 
@@ -1295,7 +1405,14 @@
 
         // 取消勾選所有 checkbox
         document.getElementById("sticker").checked = false;
-        document.getElementById("drill").checked = false;
+        const drillCheckbox = document.getElementById("drill");
+        const drillCountInput = document.getElementById("drillCount");
+        const drillCountWrapper = document.getElementById("drillCountWrapper");
+
+        drillCheckbox.checked = false;
+        drillCountInput.value = "";
+        drillCountWrapper.style.display = "none";
+
         document.getElementById("notstick").checked = false;
         document.getElementById("normalGlue").checked = false;
         document.getElementById("specialGlue").checked = false;
