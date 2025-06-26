@@ -1623,20 +1623,20 @@
         const taxeInput = document.getElementById("taxe");
         const feeInput = document.getElementById("fee");
 
-        // ❶ 無論選哪個地點，都先重設與清空欄位
+        // ❶ 所有地點通用：先清空 & 重設
         shippingSelect.value = "";
         conditionSelect.value = "";
         freightInput.value = "";
         taxeInput.value = "";
         feeInput.value = "";
 
-        // ❷ 顯示所有 shipping 選項（恢復）
+        // ❷ 恢復所有運送方式
         Array.from(shippingSelect.options).forEach((option) => {
           option.hidden = false;
         });
 
         if (place === "台灣") {
-          // ➤ 限制 shipping 選項只保留「陸運」「空運」
+          // ❸ 限制只允許空運 / 陸運
           Array.from(shippingSelect.options).forEach((option) => {
             if (
               option.value &&
@@ -1647,13 +1647,15 @@
             }
           });
 
-          // ➤ 禁用國貿條件與費用欄位
+          // ❹ 禁用：國貿條件、報關費、目的地費用
           conditionSelect.disabled = true;
           freightInput.disabled = true;
           taxeInput.disabled = true;
-          feeInput.disabled = true;
+
+          // ❺ 啟用：運費（fee）
+          feeInput.disabled = false;
         } else {
-          // ➤ 恢復所有欄位可編輯
+          // ❻ 非台灣：全部啟用
           conditionSelect.disabled = false;
           freightInput.disabled = false;
           taxeInput.disabled = false;
