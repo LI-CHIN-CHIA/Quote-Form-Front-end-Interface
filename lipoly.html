@@ -628,7 +628,7 @@
         } else {
           let maxHeight =
             parseFloat(document.getElementById("maxHeight").value) || 0;
-          let offset = maxHeight < 2 ? 2 : maxHeight;
+          let offset = maxHeight < 2 ? 2 : maxHeight > 10 ? 10 : maxHeight;
           let maxLength =
             (parseFloat(document.getElementById("maxLength").value) || 0) +
             offset;
@@ -650,7 +650,7 @@
           parseInt(document.getElementById("materialHeight").value) || 0;
         let maxHeight =
           parseFloat(document.getElementById("maxHeight").value) || 0;
-        let offset = maxHeight < 2 ? 2 : maxHeight;
+        let offset = maxHeight < 2 ? 2 : maxHeight > 10 ? 10 : maxHeight;
         let pieceWidth =
           offset +
           (parseFloat(document.getElementById("maxLength").value) || 0);
@@ -728,7 +728,7 @@
         if (isIrregular) {
           maxHeight =
             parseFloat(document.getElementById("maxHeight").value) || 0;
-          let offset = maxHeight < 2 ? 2 : maxHeight;
+          let offset = maxHeight < 2 ? 2 : maxHeight > 10 ? 10 : maxHeight;
           document.getElementById("cuttingResult").innerText = `
             不規則形狀間隔 ${offset}mm。
             普通切割方式（不轉向）：每張板材可切 ${normalPieces} 片。
@@ -869,7 +869,7 @@
         if (isIrregular) {
           maxHeight =
             parseFloat(document.getElementById("maxHeight").value) || 0;
-          let offset = maxHeight < 2 ? 2 : maxHeight;
+          let offset = maxHeight < 2 ? 2 : maxHeight > 10 ? 10 : maxHeight;
           document.getElementById("cuttingResult").innerText = `
             不規則形狀間隔 ${offset}mm。
             普通切割方式（不轉向）：每張板材可切 ${normalPieces} 片。
@@ -916,7 +916,7 @@
             parseFloat(document.getElementById("maxLength").value) || 0;
           maxHeight =
             parseFloat(document.getElementById("maxHeight").value) || 0;
-          let offset = maxHeight < 2 ? 2 : maxHeight;
+          let offset = maxHeight < 2 ? 2 : maxHeight > 10 ? 10 : maxHeight;
           pieceWidth += offset;
           pieceHeight += offset;
         } else {
@@ -1614,6 +1614,52 @@
           document.getElementById("OtherCompetitorName").value = ""; // 清空輸入框
         }
       }
+
+      document.getElementById("place").addEventListener("change", function () {
+        const place = this.value;
+        const shippingSelect = document.getElementById("shipping");
+        const conditionSelect = document.getElementById("condition");
+        const freightInput = document.getElementById("freight");
+        const taxeInput = document.getElementById("taxe");
+        const feeInput = document.getElementById("fee");
+
+        // ❶ 無論選哪個地點，都先重設與清空欄位
+        shippingSelect.value = "";
+        conditionSelect.value = "";
+        freightInput.value = "";
+        taxeInput.value = "";
+        feeInput.value = "";
+
+        // ❷ 顯示所有 shipping 選項（恢復）
+        Array.from(shippingSelect.options).forEach((option) => {
+          option.hidden = false;
+        });
+
+        if (place === "台灣") {
+          // ➤ 限制 shipping 選項只保留「陸運」「空運」
+          Array.from(shippingSelect.options).forEach((option) => {
+            if (
+              option.value &&
+              option.value !== "陸運" &&
+              option.value !== "空運"
+            ) {
+              option.hidden = true;
+            }
+          });
+
+          // ➤ 禁用國貿條件與費用欄位
+          conditionSelect.disabled = true;
+          freightInput.disabled = true;
+          taxeInput.disabled = true;
+          feeInput.disabled = true;
+        } else {
+          // ➤ 恢復所有欄位可編輯
+          conditionSelect.disabled = false;
+          freightInput.disabled = false;
+          taxeInput.disabled = false;
+          feeInput.disabled = false;
+        }
+      });
     </script>
   </body>
 </html>
