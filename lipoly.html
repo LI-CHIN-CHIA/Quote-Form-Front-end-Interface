@@ -226,21 +226,39 @@
       </div>
       <div class="section">
         <h3>📌 國貿條件與出口費用</h3>
-        <div class="form-group">
-          <label for="place">交貨地點：</label>
-          <select id="place">
-            <option value="">請選擇</option>
-            <option value="台灣">台灣</option>
-            <option value="上海">上海</option>
-            <option value="香港">香港</option>
-            <option value="越南">越南</option>
-            <option value="煙台">煙台</option>
-            <option value="深圳">深圳</option>
-            <option value="廣州">廣州</option>
-            <option value="印度">印度</option>
-            <option value="泰國">泰國</option>
-            <option value="東京">東京</option>
-          </select>
+
+        <div
+          class="form-group"
+          style="display: flex; align-items: center; gap: 8px"
+        >
+          <label for="place" style="white-space: nowrap">交貨地點：</label>
+          <div style="display: flex; width: 55%">
+            <select id="place" style="width: 100%; transition: width 0.2s">
+              <option value="">請選擇</option>
+              <option value="台灣">台灣</option>
+              <option value="上海">上海</option>
+              <option value="香港">香港</option>
+              <option value="越南">越南</option>
+              <option value="煙台">煙台</option>
+              <option value="深圳">深圳</option>
+              <option value="廣州">廣州</option>
+              <option value="印度">印度</option>
+              <option value="泰國">泰國</option>
+              <option value="東京">東京</option>
+              <option value="其他">其他</option>
+            </select>
+            <input
+              type="text"
+              id="customPlace"
+              placeholder="請輸入其他地點"
+              style="
+                width: 0%;
+                overflow: hidden;
+                border: none;
+                transition: width 0.2s;
+              "
+            />
+          </div>
         </div>
 
         <div class="form-group">
@@ -1617,26 +1635,39 @@
 
       document.getElementById("place").addEventListener("change", function () {
         const place = this.value;
+        const placeSelect = document.getElementById("place");
+        const customPlaceInput = document.getElementById("customPlace");
+
+        // ✨「其他」選項時拆寬度一半
+        if (place === "其他") {
+          placeSelect.style.width = "50%";
+          customPlaceInput.style.width = "50%";
+          customPlaceInput.style.border = "";
+        } else {
+          placeSelect.style.width = "100%";
+          customPlaceInput.style.width = "0";
+          customPlaceInput.value = "";
+          customPlaceInput.style.border = "none";
+        }
+
+        // 原本邏輯照常保留
         const shippingSelect = document.getElementById("shipping");
         const conditionSelect = document.getElementById("condition");
         const freightInput = document.getElementById("freight");
         const taxeInput = document.getElementById("taxe");
         const feeInput = document.getElementById("fee");
 
-        // ❶ 所有地點通用：先清空 & 重設
         shippingSelect.value = "";
         conditionSelect.value = "";
         freightInput.value = "";
         taxeInput.value = "";
         feeInput.value = "";
 
-        // ❷ 恢復所有運送方式
         Array.from(shippingSelect.options).forEach((option) => {
           option.hidden = false;
         });
 
         if (place === "台灣") {
-          // ❸ 限制只允許空運 / 陸運
           Array.from(shippingSelect.options).forEach((option) => {
             if (
               option.value &&
@@ -1647,15 +1678,11 @@
             }
           });
 
-          // ❹ 禁用：國貿條件、報關費、目的地費用
           conditionSelect.disabled = true;
           freightInput.disabled = true;
           taxeInput.disabled = true;
-
-          // ❺ 啟用：運費（fee）
           feeInput.disabled = false;
         } else {
-          // ❻ 非台灣：全部啟用
           conditionSelect.disabled = false;
           freightInput.disabled = false;
           taxeInput.disabled = false;
