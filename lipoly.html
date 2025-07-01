@@ -473,7 +473,7 @@
         </div>
         <div class="form-group">
           <label>牌價：</label>
-          <input type="number" id="unitPrice" />
+          <input type="number" id="unitPrice" placeholder="請輸入牌價" />
         </div>
         <div class="form-group">
           <label>折數：</label>
@@ -589,29 +589,6 @@
         } else {
           knifeMoldPrice.classList.add("hidden");
           knifeMoldPrice.value = "";
-        }
-      }
-
-      function updateMaterialInput() {
-        const size = document.getElementById("materialSize").value;
-        const widthInput = document.getElementById("materialWidth");
-        const heightInput = document.getElementById("materialHeight");
-
-        if (size === "320x320") {
-          widthInput.value = 320;
-          heightInput.value = 320;
-          widthInput.disabled = true;
-          heightInput.disabled = true;
-        } else if (size === "640x320") {
-          widthInput.value = 640;
-          heightInput.value = 320;
-          widthInput.disabled = true;
-          heightInput.disabled = true;
-        } else {
-          widthInput.value = "";
-          heightInput.value = "";
-          widthInput.disabled = false;
-          heightInput.disabled = false;
         }
       }
 
@@ -1032,8 +1009,9 @@
           smallPieceQuantity * drillCostPerPiece +
           smallPieceQuantity * stickerCostPerPrice;
         let subtotalAfterDiscount = subtotalBeforeDiscount * discount;
-        let totalPrice1 = subtotalAfterDiscount; // 不含出口費之單PCS價格
-        let totalPrice = subtotalAfterDiscount + freight + fee + taxe; // 含出口費之總價
+        let totalPrice1 = subtotalAfterDiscount + quantity * 0.1; // 不含出口費之單PCS價格
+        let totalPrice =
+          subtotalAfterDiscount + freight + fee + taxe + quantity * 0.1; // 含出口費之總價
 
         // === 7. 單片價格 ===
         let materialCostPerPiece = totalPrice / smallPieceQuantity; // 含出口費之單pcs價格
@@ -1083,23 +1061,23 @@
           calculationExplanationDiv.innerHTML = `
 
         <p><strong>片材使用數量：</strong> ${quantity} / ${normalPieces} = ${bigSheetQuantitypoint}
-        <p><strong>不含費用之單pcs價格：</strong>
-          [(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCostPerPiece}) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount} / ${smallPieceQuantity}
+        <p><strong>不含出口費用之單pcs價格：</strong>
+          [(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCount} × ${drillCostPerHole}) + ( ${quantity} * 0.1 ) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount} / ${smallPieceQuantity}
           = <strong>${materialCostPerPiece1.toFixed(4)}</strong> 元
         </p>
 
-        <p><strong>含費用之單pcs價格：</strong>
-          [(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCostPerPiece}) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount} + 出口費 ${fee} + 報關費 ${freight} + 目的地費 ${taxe}) / ${smallPieceQuantity}
+        <p><strong>含出口費用之單pcs價格：</strong>
+          [(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCount} × ${drillCostPerHole}) + ( ${quantity} * 0.1 ) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount} + 出口費 ${fee} + 報關費 ${freight} + 目的地費 ${taxe}) / ${smallPieceQuantity}
           = <strong>${materialCostPerPiece.toFixed(4)}</strong> 元
         </p>
 
-        <p><strong>不含費用之總價：</strong>
-          [(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCostPerPiece}) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount})
+        <p><strong>不含出口費用之總價：</strong>
+          [(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCount} × ${drillCostPerHole}) + ( ${quantity} * 0.1 ) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount})
           = <strong>${Math.round(totalPrice1)}</strong> 元
         </p>
 
-        <p><strong>含費用之總價：</strong>
-          [(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCostPerPiece}) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount} + 出口費 ${fee} + 報關費 ${freight} + 目的地費 ${taxe})
+        <p><strong>含出口費用之總價：</strong>
+          [(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCount} × ${drillCostPerHole}) + ( ${quantity} * 0.1 ) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount} + 出口費 ${fee} + 報關費 ${freight} + 目的地費 ${taxe})
           = <strong>${Math.round(totalPrice)}</strong> 元
         </p>
       `;
@@ -1183,6 +1161,7 @@
 
         // ========== 特殊加工 ==========
         let specialProcessing = [];
+
         if (document.getElementById("sticker").checked)
           specialProcessing.push("拉拔 (+0.4/pcs)");
         if (document.getElementById("notstick").checked)
@@ -1192,6 +1171,16 @@
             parseInt(document.getElementById("drillCount").value) || 0;
           specialProcessing.push(`挖洞 (+0.2/孔) x ${drillCount}孔`);
         }
+
+        // ========== 裁切費用 ==========
+        const cuttingCost = quantity * 0.1;
+        if (quantity > 0) {
+          specialProcessing.push(
+            `裁切費用 (+0.1/pcs) x ${quantity} = ${cuttingCost.toFixed(1)}元`
+          );
+        }
+
+        // ========== 刀模費 ==========
         let knifeMoldChecked =
           document.getElementById("knifeMoldCheck").checked;
         let knifeMoldCost = 0;
@@ -1600,7 +1589,7 @@
             totalQuantity > 0 ? shippingFee / totalQuantity : 0;
 
           const unitPriceWithShippingNum = unitPrice + shippingPerPiece;
-          const unitPriceWithShipping = unitPriceWithShippingNum.toFixed(2);
+          const unitPriceWithShipping = unitPriceWithShippingNum.toFixed(4);
           const totalPrice = (unitPrice * quantity).toFixed(2);
           const totalPriceWithShipping = Math.round(
             unitPriceWithShippingNum * quantity
@@ -1689,6 +1678,33 @@
           feeInput.disabled = false;
         }
       });
+
+      function updateMaterialInput() {
+        const size = document.getElementById("materialSize").value;
+        const widthInput = document.getElementById("materialWidth");
+        const heightInput = document.getElementById("materialHeight");
+        const unitPriceInput = document.getElementById("unitPrice");
+
+        if (size === "320x320") {
+          widthInput.value = 320;
+          heightInput.value = 320;
+          widthInput.disabled = true;
+          heightInput.disabled = true;
+          unitPriceInput.placeholder = "請輸入牌價";
+        } else if (size === "640x320") {
+          widthInput.value = 640;
+          heightInput.value = 320;
+          widthInput.disabled = true;
+          heightInput.disabled = true;
+          unitPriceInput.placeholder = "非320x320之牌價";
+        } else {
+          widthInput.value = "";
+          heightInput.value = "";
+          widthInput.disabled = false;
+          heightInput.disabled = false;
+          unitPriceInput.placeholder = "非320x320之牌價";
+        }
+      }
     </script>
   </body>
 </html>
