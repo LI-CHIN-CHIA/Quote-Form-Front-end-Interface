@@ -1445,57 +1445,39 @@
         const rows = Array.from(table.rows);
         const exportData = [];
 
-        // 1️⃣ 擷取主表格資料（取前 12 欄）
+        // 1️⃣ 擷取主表格資料（A～N欄）
         rows.forEach((row) => {
           const cells = Array.from(row.cells);
-          const cleanRow = cells.slice(0, 13).map((cell) => cell.innerText);
+          const cleanRow = cells.slice(0, 14).map((cell) => cell.innerText);
           exportData.push(cleanRow);
         });
 
-        // 2️⃣ 擷取基本資料欄位
+        // 2️⃣ 擷取基本資料欄位（藍色區塊）
         const companyName = document.getElementById("companyName").value || "";
-        const listedCompany =
-          document.querySelector('input[name="listedCompany"]:checked')
-            ?.value || "";
-        const industryType =
-          document.getElementById("industryType").value || "";
-        const isCompetitor =
-          document.querySelector('input[name="isCompetitor"]:checked')?.value ||
-          "";
-        const competitorName =
-          isCompetitor === "是"
-            ? document.getElementById("OtherCompetitorName").value || ""
-            : "";
+        // const productName = document.getElementById("productName").value || "";
+        const competitorNames =
+          document.getElementById("OtherCompetitorName").value || "無";
+        const placeSelect = document.getElementById("place").value;
+        const customPlace = document.getElementById("customPlace").value;
+        const deliveryPlace =
+          placeSelect === "其他" ? customPlace || "未填寫" : placeSelect;
+        // const purchaseNote =
+        //   document.getElementById("purchaseNote").value || "";
+        // const remark = document.getElementById("remark").value || "";
 
-        // 3️⃣ 基本資料表頭 + 資料列，先建成兩列
-        const baseInfoHeader = []; // 第 1 列（O欄起）
-        const baseInfoRow = []; // 第 2 列（O欄起）
+        // 新增費用欄位
+        const shippingFee = document.getElementById("fee").value || "0";
+        const taiwanFee = document.getElementById("freight").value || "0";
+        const destinationFee = document.getElementById("taxe").value || "0";
 
-        // 補齊前14欄（A～N空白）
-        for (let i = 0; i < 14; i++) {
-          baseInfoHeader.push("");
-          baseInfoRow.push("");
-        }
-
-        // O～S欄資料
-        baseInfoHeader.push(
-          "公司名稱",
-          "上市櫃",
-          "產業別",
-          "是否有競爭對手",
-          "對手公司"
-        );
-        baseInfoRow.push(
-          companyName,
-          listedCompany,
-          industryType,
-          isCompetitor,
-          competitorName
-        );
-        updateShippingFeeAndUnitCost();
-        // 插入最上方
-        exportData.unshift(baseInfoRow);
-        exportData.unshift(baseInfoHeader);
+        // 3️⃣ 插入空白列後新增補充資訊（前面補14欄空白，對齊O欄起）
+        exportData.push(["◎客戶：", companyName]);
+        exportData.push(["◎對手：", competitorNames]);
+        exportData.push(["◎交貨地：", deliveryPlace]);
+        exportData.push([]);
+        exportData.push(["運費：", shippingFee]);
+        exportData.push(["台灣報關費用：", taiwanFee]);
+        exportData.push(["目的地費用：", destinationFee]);
 
         // 4️⃣ 匯出
         const ws = XLSX.utils.aoa_to_sheet(exportData);
@@ -1503,6 +1485,70 @@
         XLSX.utils.book_append_sheet(wb, ws, "報價單");
         XLSX.writeFile(wb, "報價單.xlsx");
       }
+
+      // function exportToExcel() {
+      //   const table = document.getElementById("quoteTable");
+      //   const rows = Array.from(table.rows);
+      //   const exportData = [];
+
+      //   // 1️⃣ 擷取主表格資料（取前 13 欄）
+      //   rows.forEach((row) => {
+      //     const cells = Array.from(row.cells);
+      //     const cleanRow = cells.slice(0, 14).map((cell) => cell.innerText);
+      //     exportData.push(cleanRow);
+      //   });
+
+      //   // 2️⃣ 擷取基本資料欄位
+      //   const companyName = document.getElementById("companyName").value || "";
+      //   const listedCompany =
+      //     document.querySelector('input[name="listedCompany"]:checked')
+      //       ?.value || "";
+      //   const industryType =
+      //     document.getElementById("industryType").value || "";
+      //   const isCompetitor =
+      //     document.querySelector('input[name="isCompetitor"]:checked')?.value ||
+      //     "";
+      //   const competitorName =
+      //     isCompetitor === "是"
+      //       ? document.getElementById("OtherCompetitorName").value || "無"
+      //       : "";
+
+      //   // 3️⃣ 基本資料表頭 + 資料列，先建成兩列
+      //   const baseInfoHeader = []; // 第 1 列（O欄起）
+      //   const baseInfoRow = []; // 第 2 列（O欄起）
+
+      //   // 補齊前14欄（A～N空白）
+      //   for (let i = 0; i < 15; i++) {
+      //     baseInfoHeader.push("");
+      //     baseInfoRow.push("");
+      //   }
+
+      //   // O～S欄資料
+      //   baseInfoHeader.push(
+      //     "公司名稱",
+      //     "上市櫃",
+      //     "產業別",
+      //     "是否有競爭對手",
+      //     "對手公司"
+      //   );
+      //   baseInfoRow.push(
+      //     companyName,
+      //     listedCompany,
+      //     industryType,
+      //     isCompetitor,
+      //     competitorName
+      //   );
+      //   updateShippingFeeAndUnitCost();
+      //   // 插入最上方
+      //   exportData.unshift(baseInfoRow);
+      //   exportData.unshift(baseInfoHeader);
+
+      //   // 4️⃣ 匯出
+      //   const ws = XLSX.utils.aoa_to_sheet(exportData);
+      //   const wb = XLSX.utils.book_new();
+      //   XLSX.utils.book_append_sheet(wb, ws, "報價單");
+      //   XLSX.writeFile(wb, "報價單.xlsx");
+      // }
 
       // function updateShippingFeeAndUnitCost() {
       //   const table = document
