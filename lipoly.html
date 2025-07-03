@@ -237,7 +237,7 @@
               <option value="">請選擇</option>
               <option value="台灣">台灣</option>
               <option value="上海">上海</option>
-              <option value="香港">香港</option>
+              <option value="DAP香港">DAP香港</option>
               <option value="越南">越南</option>
               <option value="煙台">煙台</option>
               <option value="深圳">深圳</option>
@@ -336,7 +336,7 @@
         <div class="form-group">
           <label>選擇尺寸：</label>
           <select id="materialSize" onchange="updateMaterialInput()">
-            <option value="custom">自訂尺寸</option>
+            <option value="custom">自訂尺寸(與簡總討論)</option>
             <option value="320x320">320 x 320</option>
             <option value="640x320">640 x 320</option>
           </select>
@@ -495,19 +495,20 @@
       <div class="section quote-result">
         <h3>📌 報價結果</h3>
         <p>
-          <strong>1pcs 價格（不含其他費用）：</strong>
+          <strong>1pcs 價格（不含出口費用）：</strong>
           <span id="materialCostPerPiece1">0.0000</span> 元
         </p>
         <p>
-          <strong>1pcs 價格（含費用）：</strong>
+          <strong>1pcs 價格（含出口費用）：</strong>
           <span id="materialCostPerPiece">0.0000</span> 元
         </p>
         <p>
-          <strong>總價格（不含其他費用）：</strong>
+          <strong>總價格（不含出口費用）：</strong>
           <span id="totalPrice1">0</span> 元
         </p>
         <p>
-          <strong>總價格（含費用）：</strong> <span id="totalPrice">0</span> 元
+          <strong>總價格（含出口費用）：</strong>
+          <span id="totalPrice">0</span> 元
         </p>
       </div>
 
@@ -1030,28 +1031,52 @@
           materialCostPerPiece1.toFixed(4);
 
         // **取得基本資料**
-        let companyName =
-          document.getElementById("companyName").value || "未填寫";
-        let industryType =
-          document.getElementById("industryType").value || "未填寫";
-        let isCompetitor =
-          document.querySelector('input[name="isCompetitor"]:checked')?.value ||
-          "未選擇";
-        let competitorName =
-          document.getElementById("OtherCompetitorName").value || "未填寫";
-        if (isCompetitor === "是") {
-          isCompetitor += `（競爭對手：${competitorName}）`;
-        }
-        let quoteDetailsDiv = document.getElementById("quoteDetails");
+        const companyName = document.getElementById("companyName").value;
+        const industryType = document.getElementById("industryType").value;
+        const isCompetitor = document.querySelector(
+          'input[name="isCompetitor"]:checked'
+        ).value;
+        const competitorName = document.getElementById(
+          "OtherCompetitorName"
+        ).value;
+        const listedStatus = document.querySelector(
+          'input[name="listedCompany"]:checked'
+        ).value;
+
+        const place = document.getElementById("place").value;
+        const customPlace = document.getElementById("customPlace").value;
+        const finalPlace =
+          place === "其他" && customPlace.trim() !== "" ? customPlace : place;
+
+        const shipping = document.getElementById("shipping").value;
+        const condition = document.getElementById("condition").value;
+
+        const quoteDetailsDiv = document.getElementById("quoteDetails");
         if (quoteDetailsDiv) {
           quoteDetailsDiv.innerHTML = `
-              	<p><strong>公司名稱：</strong> ${companyName}</p>
-              	<p><strong>行業別：</strong> ${industryType}</p>
-              	<p><strong>是否有競爭對手：</strong> ${isCompetitor}</p>
-          	`;
+            <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+              <div style="flex: 1; min-width: 200px;">
+                <p><strong>公司名稱：</strong> ${companyName}</p>
+                <p><strong>上市櫃：</strong> ${listedStatus}</p>
+                <p><strong>行業別：</strong> ${industryType}</p>
+                <p><strong>是否有競爭對手：</strong> ${isCompetitor}</p>
+              </div>
+              <div style="flex: 1; min-width: 200px;">
+                ${
+                  isCompetitor === "是"
+                    ? `<p><strong>對手公司：</strong> ${competitorName}</p>`
+                    : ""
+                }
+                <p><strong>交貨地點：</strong> ${finalPlace}</p>
+                <p><strong>運送方式：</strong> ${shipping}</p>
+                <p><strong>國貿條件：</strong> ${condition}</p>
+              </div>
+            </div>
+          `;
         } else {
           console.error("❌ 無法找到 #quoteDetails，請確認 HTML 結構！");
         }
+
         // === 10. 顯示計算公式說明 ===
         let calculationExplanationDiv = document.getElementById(
           "calculationExplanation"
@@ -1454,32 +1479,49 @@
 
         // 2️⃣ 擷取基本資料欄位（藍色區塊）
         const companyName = document.getElementById("companyName").value || "";
-        // const productName = document.getElementById("productName").value || "";
+        const listedStatus =
+          document.querySelector('input[name="listedCompany"]:checked')
+            ?.value || "未填寫";
+        const industryType =
+          document.getElementById("industryType").value || "未填寫";
+        const isCompetitor =
+          document.querySelector('input[name="isCompetitor"]:checked')?.value ||
+          "未填寫";
         const competitorNames =
           document.getElementById("OtherCompetitorName").value || "無";
         const placeSelect = document.getElementById("place").value;
         const customPlace = document.getElementById("customPlace").value;
         const deliveryPlace =
           placeSelect === "其他" ? customPlace || "未填寫" : placeSelect;
-        // const purchaseNote =
-        //   document.getElementById("purchaseNote").value || "";
-        // const remark = document.getElementById("remark").value || "";
+        const shipping = document.getElementById("shipping").value || "未選擇";
+        const condition =
+          document.getElementById("condition").value || "未選擇";
 
-        // 新增費用欄位
+        // 3️⃣ 新增費用欄位
         const shippingFee = document.getElementById("fee").value || "0";
         const taiwanFee = document.getElementById("freight").value || "0";
         const destinationFee = document.getElementById("taxe").value || "0";
 
-        // 3️⃣ 插入空白列後新增補充資訊（前面補14欄空白，對齊O欄起）
-        exportData.push(["◎客戶：", companyName]);
-        exportData.push(["◎對手：", competitorNames]);
-        exportData.push(["◎交貨地：", deliveryPlace]);
-        exportData.push([]);
-        exportData.push(["運費：", shippingFee]);
-        exportData.push(["台灣報關費用：", taiwanFee]);
-        exportData.push(["目的地費用：", destinationFee]);
+        // 4️⃣ 插入空白列後新增補充資訊（前面補14欄空白，對齊O欄起）
+        const indent = Array(0).fill("");
 
-        // 4️⃣ 匯出
+        exportData.push([]);
+        exportData.push([...indent, "◎客戶：", companyName]);
+        exportData.push([...indent, "◎上市櫃：", listedStatus]);
+        exportData.push([...indent, "◎行業別：", industryType]);
+        exportData.push([...indent, "◎是否有競爭對手：", isCompetitor]);
+        if (isCompetitor === "是") {
+          exportData.push([...indent, "◎對手公司：", competitorNames]);
+        }
+        exportData.push([...indent, "◎交貨地：", deliveryPlace]);
+        exportData.push([...indent, "◎運送方式：", shipping]);
+        exportData.push([...indent, "◎國貿條件：", condition]);
+        exportData.push([]);
+        exportData.push([...indent, "運費：", shippingFee]);
+        exportData.push([...indent, "台灣報關費用：", taiwanFee]);
+        exportData.push([...indent, "目的地費用：", destinationFee]);
+
+        // 5️⃣ 匯出
         const ws = XLSX.utils.aoa_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "報價單");
