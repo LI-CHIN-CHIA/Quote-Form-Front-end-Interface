@@ -1196,6 +1196,9 @@
             parseInt(document.getElementById("drillCount").value) || 0;
           specialProcessing.push(`挖洞 (+0.2/孔) x ${drillCount}孔`);
         }
+        if (quantity > 0) {
+          specialProcessing.push(`數量加價 (+0.1/pcs) x ${quantity} pcs`);
+        }
 
         // ========== 裁切費用 ==========
         const cuttingCost = quantity * 0.1;
