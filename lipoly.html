@@ -884,6 +884,7 @@
             切割方案：${bestResult.bestConfig}\n
             材料浪費：${wastePercentRounded}%`;
         }
+        window.latestWastePercent = wastePercentRounded;
 
         return bestResult.maxPieces;
       }
@@ -1223,6 +1224,7 @@
 
         // ========== 材料浪費率 ==========
         let wastePercentRounded = window.latestWastePercent || "0.00";
+        window.latestWastePercent = wastePercentRounded;
 
         // ========== 背膠 ==========
         let glueText = "不背膠";
