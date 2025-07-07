@@ -13,7 +13,7 @@
         padding: 0;
       }
       .container {
-        width: 800px;
+        width: 1000px;
         background: white;
         margin: 20px auto;
         padding: 20px;
@@ -469,7 +469,7 @@
         <h3>📌 報價資訊</h3>
         <div class="form-group">
           <label>訂單數量：</label>
-          <input type="number" id="quantity" />
+          <input type="number" id="quantity" placeholder="每pcs +0.1元" />
         </div>
         <div class="form-group">
           <label>牌價：</label>
@@ -530,7 +530,10 @@
               <th>品項/數量/尺寸</th>
               <th>年用量</th>
               <th>MOQ</th>
+              <th>素材牌價</th>
               <th>折數</th>
+              <th>折後素材價</th>
+              <th>材料浪費率</th>
               <th>特殊加工</th>
               <th>背膠</th>
               <th>刀模費用</th>
@@ -1087,22 +1090,22 @@
 
         <p><strong>片材使用數量：</strong> ${quantity} / ${normalPieces} = ${bigSheetQuantitypoint}
         <p><strong>不含出口費用之單pcs價格：</strong>
-          [(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCount} × ${drillCostPerHole}) + ( ${quantity} * 0.1 ) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount} / ${smallPieceQuantity}
+          {[(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCount} × ${drillCostPerHole}) + ( ${quantity} * 0.1 ) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount}} / ${smallPieceQuantity}
           = <strong>${materialCostPerPiece1.toFixed(4)}</strong> 元
         </p>
 
         <p><strong>含出口費用之單pcs價格：</strong>
-          [(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCount} × ${drillCostPerHole}) + ( ${quantity} * 0.1 ) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount} + 出口費 ${fee} + 報關費 ${freight} + 目的地費 ${taxe}) / ${smallPieceQuantity}
+          {[(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCount} × ${drillCostPerHole}) + ( ${quantity} * 0.1 ) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount} + 出口費 ${fee} + 報關費 ${freight} + 目的地費 ${taxe}} / ${smallPieceQuantity}
           = <strong>${materialCostPerPiece.toFixed(4)}</strong> 元
         </p>
 
         <p><strong>不含出口費用之總價：</strong>
-          [(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCount} × ${drillCostPerHole}) + ( ${quantity} * 0.1 ) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount})
+          [(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCount} × ${drillCostPerHole}) + ( ${quantity} * 0.1 ) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount}
           = <strong>${Math.round(totalPrice1)}</strong> 元
         </p>
 
         <p><strong>含出口費用之總價：</strong>
-          [(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCount} × ${drillCostPerHole}) + ( ${quantity} * 0.1 ) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount} + 出口費 ${fee} + 報關費 ${freight} + 目的地費 ${taxe})
+          [(${unitPrice} + ${notstickCost} + ${glueCost}) × ${bigSheetQuantitypoint} + (${smallPieceQuantity} × ${drillCount} × ${drillCostPerHole}) + ( ${quantity} * 0.1 ) + (${smallPieceQuantity} × ${stickerCostPerPrice})] × 折扣 ${discount} + 出口費 ${fee} + 報關費 ${freight} + 目的地費 ${taxe}
           = <strong>${Math.round(totalPrice)}</strong> 元
         </p>
       `;
@@ -1196,9 +1199,6 @@
             parseInt(document.getElementById("drillCount").value) || 0;
           specialProcessing.push(`挖洞 (+0.2/孔) x ${drillCount}孔`);
         }
-        if (quantity > 0) {
-          specialProcessing.push(`數量加價 (+0.1/pcs) x ${quantity} pcs`);
-        }
 
         // ========== 裁切費用 ==========
         const cuttingCost = quantity * 0.1;
@@ -1221,6 +1221,9 @@
         let specialText =
           specialProcessing.length > 0 ? specialProcessing.join("、") : "無";
 
+        // ========== 材料浪費率 ==========
+        let wastePercentRounded = window.latestWastePercent || "0.00";
+
         // ========== 背膠 ==========
         let glueText = "不背膠";
         if (document.getElementById("normalGlue").checked)
@@ -1234,27 +1237,31 @@
         newRow.insertCell(1).innerText = `${item} / ${quantity} / ${sizeText}`; // 品項/數量/尺寸
         newRow.insertCell(2).innerText = yearUsage; // 年用量
         newRow.insertCell(3).innerText = moq; // MOQ
-        newRow.insertCell(4).innerText = discount; // 折數
-        newRow.insertCell(5).innerText = specialText; // 特殊加工
-        newRow.insertCell(6).innerText = glueText; // 背膠
-        newRow.insertCell(7).innerText = knifeMoldCost.toString(); // 刀模費用
-        newRow.insertCell(8).innerText = pcsPrice1; // 1pcs價格
-        newRow.insertCell(9).innerText = pcsPrice; // 1pcs價格
-        newRow.insertCell(10).innerText = totalPrice1; // 總價
-        newRow.insertCell(11).innerText = totalPrice; // 總價
-        newRow.insertCell(12).innerText = pcsPrice; // 出口占比（暫用）
-        newRow.insertCell(13).innerText = materialSizeText; // 片材尺寸
-        let actionsCell = newRow.insertCell(14);
+        newRow.insertCell(4).innerText = unitPrice;
+        newRow.insertCell(5).innerText = discount; // 折數
+        newRow.insertCell(6).innerText = (unitPrice * discount).toFixed(2); // ✅ 折後素材價
+        newRow.insertCell(7).innerText = wastePercentRounded + "%";
+        newRow.insertCell(8).innerText = specialText; // 特殊加工
+        newRow.insertCell(9).innerText = glueText; // 背膠
+        newRow.insertCell(10).innerText = knifeMoldCost.toString(); // 刀模費用
+        newRow.insertCell(11).innerText = pcsPrice1; // 1pcs價格
+        newRow.insertCell(12).innerText = pcsPrice; // 1pcs價格
+        newRow.insertCell(13).innerText = totalPrice1; // 總價
+        newRow.insertCell(14).innerText = totalPrice; // 總價
+        newRow.insertCell(15).innerText = pcsPrice; // 出口占比（暫用）
+        newRow.insertCell(16).innerText = materialSizeText; // 片材尺寸
+        let actionsCell = newRow.insertCell(17);
         actionsCell.innerHTML = `
             <button onclick="editRow(this)">編輯</button>
             <button onclick="deleteRow(this)">刪除</button>
           `;
-        let unitCell = newRow.insertCell(15);
+        let unitCell = newRow.insertCell(18);
         unitCell.innerText = unitPrice;
         unitCell.style.display = "none";
         clearFormInputs();
         updateShippingFeeAndUnitCost();
       }
+
       function editRow(button) {
         let row = button.parentNode.parentNode; // 找到整列
         let table = document
@@ -1264,7 +1271,7 @@
         let cells = row.getElementsByTagName("td");
 
         // 還原板材尺寸
-        let materialSizeParts = cells[14].innerText.split("x"); // "320 x 320"
+        let materialSizeParts = cells[17].innerText.split("x"); // "320 x 320"
         if (materialSizeParts.length === 2) {
           let width = materialSizeParts[0].trim();
           let height = materialSizeParts[1].trim();
@@ -1300,7 +1307,7 @@
 
         document.getElementById("year").value = cells[2].innerText || "";
         document.getElementById("MOQ").value = cells[3].innerText || "";
-        document.getElementById("discount").value = cells[4].innerText || "";
+        document.getElementById("discount").value = cells[5].innerText || "";
         document.getElementById("materialCostPerPiece").innerText =
           cells[8].innerText || "0";
         document.getElementById("materialCostPerPiece1").value =
@@ -1311,9 +1318,9 @@
         document.getElementById("totalPrice1").value =
           cells[11].innerText || "0";
         document.getElementById("quantity").value = itemSize[1].trim(); // ← 補上數量欄位
-        document.getElementById("unitPrice").value = cells[15].innerText || "0";
+        document.getElementById("unitPrice").value = cells[4].innerText || "0";
         // 判斷特殊加工勾選
-        let special = cells[5].innerText;
+        let special = cells[8].innerText;
         document.getElementById("sticker").checked = special.includes("拉拔");
 
         const drillCheckbox = document.getElementById("drill");
@@ -1349,7 +1356,7 @@
           special.includes("表面不黏");
 
         // 判斷背膠勾選
-        let glue = cells[6].innerText;
+        let glue = cells[9].innerText;
         document.getElementById("normalGlue").checked = glue.includes("普通膠");
         document.getElementById("specialGlue").checked =
           glue.includes("指定膠");
@@ -1376,12 +1383,12 @@
           }
 
           // 刀模費用開關與數值（看你有無存進表格）
-          const knifeMoldText = cells[5].innerText; // 或其他地方
+          const knifeMoldText = cells[8].innerText; // 或其他地方
           const knifeMoldIncluded = knifeMoldText.includes("刀模");
           document.getElementById("knifeMoldCheck").checked = knifeMoldIncluded;
           toggleKnifeMoldInput(); // 顯示或隱藏 input
           // 刀模費用處理（直接讀 index 7 的純數字欄）
-          let knifeMoldCost = parseFloat(cells[7].innerText) || 0;
+          let knifeMoldCost = parseFloat(cells[10].innerText) || 0;
           document.getElementById("knifeMoldCheck").checked = knifeMoldCost > 0;
           document.getElementById("knifeMoldPrice").value = knifeMoldCost;
           toggleKnifeMoldInput();
@@ -1476,7 +1483,7 @@
         // 1️⃣ 擷取主表格資料（A～N欄）
         rows.forEach((row) => {
           const cells = Array.from(row.cells);
-          const cleanRow = cells.slice(0, 14).map((cell) => cell.innerText);
+          const cleanRow = cells.slice(0, 17).map((cell) => cell.innerText);
           exportData.push(cleanRow);
         });
 
@@ -1670,7 +1677,7 @@
 
         // 3. 平均分攤運費後更新每一列
         for (let row of rows) {
-          const unitPrice = parseFloat(row.cells[8].innerText) || 0; // 原始單PCS價格（不含運）
+          const unitPrice = parseFloat(row.cells[11].innerText) || 0; // 原始單PCS價格（不含運）
           const cellText = row.cells[1].innerText;
           const parts = cellText.split("/");
           const quantity =
@@ -1692,9 +1699,9 @@
               : "0%";
 
           // 更新欄位
-          row.cells[9].innerText = unitPriceWithShipping; // 第10欄：含運單PCS價格
-          row.cells[11].innerText = totalPriceWithShipping; // 第12欄：含運總價
-          row.cells[12].innerText = Freight_ratio; // 第13欄：出口費用占比
+          row.cells[12].innerText = unitPriceWithShipping; // 第10欄：含運單PCS價格
+          row.cells[14].innerText = totalPriceWithShipping; // 第12欄：含運總價
+          row.cells[15].innerText = Freight_ratio; // 第13欄：出口費用占比
         }
       }
 
