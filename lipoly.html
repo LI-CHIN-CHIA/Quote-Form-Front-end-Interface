@@ -573,6 +573,15 @@
         });
       });
 
+      function updateRowIndices() {
+        const tbody = document
+          .getElementById("quoteTable")
+          .getElementsByTagName("tbody")[0];
+        Array.from(tbody.rows).forEach((row, index) => {
+          row.cells[0].innerText = index + 1; // 將第一欄（序號）設為對應的列數（從1開始）
+        });
+      }
+
       function toggleDrillInput() {
         const drillCheckbox = document.getElementById("drill");
         const drillCountWrapper = document.getElementById("drillCountWrapper");
@@ -1130,6 +1139,7 @@
           );
         }
         updateShippingFeeAndUnitCost();
+        updateRowIndices();
       }
 
       function toggleOtherInput() {
@@ -1278,9 +1288,11 @@
         unitCell.style.display = "none";
         clearFormInputs();
         updateShippingFeeAndUnitCost();
+        updateRowIndices();
       }
 
       function editRow(button) {
+        updateRowIndices();
         let row = button.parentNode.parentNode; // 找到整列
         let table = document
           .getElementById("quoteTable")
@@ -1430,6 +1442,7 @@
           .getElementsByTagName("tbody")[0];
         table.deleteRow(row.rowIndex - 1);
         updateShippingFeeAndUnitCost();
+        updateRowIndices();
       }
       function toggleShape() {
         const isRectangle = document.getElementById("rectangle").checked;
@@ -1494,6 +1507,7 @@
       }
 
       function exportToExcel() {
+        updateRowIndices();
         const table = document.getElementById("quoteTable");
         const rows = Array.from(table.rows);
         const exportData = [];
