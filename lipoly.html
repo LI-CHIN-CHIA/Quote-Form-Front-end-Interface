@@ -1218,9 +1218,7 @@
         // ========== 裁切費用 ==========
         const cuttingCost = quantity * 0.1;
         if (quantity > 0) {
-          specialProcessing.push(
-            `裁切費用 (+0.1/pcs) x ${quantity} = ${cuttingCost.toFixed(1)}元`
-          );
+          specialProcessing.push(`裁切費用 (+0.1/pcs) x ${quantity}`);
         }
 
         // ========== 刀模費 ==========
@@ -1329,14 +1327,14 @@
         document.getElementById("MOQ").value = cells[3].innerText || "";
         document.getElementById("discount").value = cells[5].innerText || "";
         document.getElementById("materialCostPerPiece").innerText =
-          cells[8].innerText || "0";
+          cells[11].innerText || "0";
         document.getElementById("materialCostPerPiece1").value =
-          cells[9].innerText || "0";
+          cells[12].innerText || "0";
         // //document.getElementById("fee").value = cells[9].innerText || "";
         document.getElementById("totalPrice").innerText =
-          cells[10].innerText || "0";
+          cells[13].innerText || "0";
         document.getElementById("totalPrice1").value =
-          cells[11].innerText || "0";
+          cells[14].innerText || "0";
         document.getElementById("quantity").value = itemSize[1].trim(); // ← 補上數量欄位
         document.getElementById("unitPrice").value = cells[4].innerText || "0";
         // 判斷特殊加工勾選
