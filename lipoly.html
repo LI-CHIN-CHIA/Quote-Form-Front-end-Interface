@@ -1555,7 +1555,22 @@
         const ws = XLSX.utils.aoa_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "報價單");
-        XLSX.writeFile(wb, "報價單.xlsx");
+        // 建立日期字串（格式：YYYY-MM-DD）
+        const today = new Date();
+        const dateStr = today.toISOString().split("T")[0]; // 例如：2025-07-08
+
+        // 清理客戶名稱（移除空白與非法字元）
+        const cleanCompanyName = companyName
+          .trim()
+          .replace(/[\\/:*?"<>|]/g, "_");
+
+        // 組合檔案名稱
+        const filename = `報價單-${
+          cleanCompanyName || "未填寫"
+        }-${dateStr}.xlsx`;
+
+        // 匯出 Excel
+        XLSX.writeFile(wb, filename);
       }
 
       // function exportToExcel() {
