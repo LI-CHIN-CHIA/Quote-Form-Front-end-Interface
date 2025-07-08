@@ -237,7 +237,7 @@
               <option value="">請選擇</option>
               <option value="台灣">台灣</option>
               <option value="上海">上海</option>
-              <option value="DAP香港">DAP香港</option>
+              <option value="香港">香港</option>
               <option value="越南">越南</option>
               <option value="煙台">煙台</option>
               <option value="深圳">深圳</option>
@@ -711,7 +711,11 @@
         let normalRows = Math.floor(materialHeight / pieceHeight);
         let normalColumns = Math.floor(materialWidth / pieceWidth);
         let normalPieces = normalRows * normalColumns;
-        let normalConfig = `每張板材切成 ${normalRows} 列、每列 ${normalColumns} 片，總共 ${normalPieces} 片（不轉向）。`;
+        let normalConfig = `每張板材切成 ${normalRows} 列、每列 ${normalColumns} pcs，總共 ${normalPieces} pcs（不轉向）。`;
+        let usedAreaNormal = pieceWidth * pieceHeight * normalPieces;
+        let wastePercentNormal =
+          ((totalArea - usedAreaNormal) / totalArea) * 100;
+        let wastePercentNormalRounded = wastePercentNormal.toFixed(2);
 
         console.log("📏 測試參數印出：");
         console.log("materialHeight:", materialHeight);
@@ -730,19 +734,22 @@
           let offset = maxHeight < 2 ? 2 : maxHeight > 10 ? 10 : maxHeight;
           document.getElementById("cuttingResult").innerText = `
             不規則形狀間隔 ${offset}mm。
-            普通切割方式（不轉向）：每張板材可切 ${normalPieces} 片。
-            切割方案：${normalConfig}\n
-            最佳切割方式：每張板材可切 ${bestResult.maxPieces} 片。
+            普通切割方式（不轉向）：每張板材可切 ${normalPieces} pcs。
+            切割方案：${normalConfig}
+            普通切割材料浪費：${wastePercentNormalRounded}%\n
+            最佳切割方式：每張板材可切 ${bestResult.maxPieces} pcs。
             切割方案：${bestResult.bestConfig}\n
-            材料浪費：${wastePercentRounded}%`;
+            最佳切割材料浪費：${wastePercentRounded}%`;
         } else {
           document.getElementById("cuttingResult").innerText = `
-            普通切割方式（不轉向）：每張板材可切 ${normalPieces} 片。
-            切割方案：${normalConfig}\n
-            最佳切割方式：每張板材可切 ${bestResult.maxPieces} 片。
+            普通切割方式（不轉向）：每張板材可切 ${normalPieces} pcs。
+            切割方案：${normalConfig}
+            普通切割材料浪費：${wastePercentNormalRounded}%\n
+            最佳切割方式：每張板材可切 ${bestResult.maxPieces} pcs。
             切割方案：${bestResult.bestConfig}\n
-            材料浪費：${wastePercentRounded}%`;
+            最佳切割材料浪費：${wastePercentRounded}%`;
         }
+        window.wastePercentNormalRounded = wastePercentNormalRounded;
 
         return bestResult.maxPieces;
       }
@@ -854,6 +861,11 @@
           normalPieces = cutB.pieces;
         }
         let normalConfig = `每張片材切成 ${normalRows} 列、每列 ${normalColumns} pcs，總共 ${normalPieces} pcs（不轉向）。`;
+        let usedAreaNormal = pieceWidth * pieceHeight * normalPieces;
+        let wastePercentNormal =
+          ((totalArea - usedAreaNormal) / totalArea) * 100;
+        let wastePercentNormalRounded = wastePercentNormal.toFixed(2);
+
         console.log("📏 測試參數印出：");
         console.log("materialHeight:", materialHeight);
         console.log("materialWidth:", materialWidth);
@@ -871,20 +883,22 @@
           let offset = maxHeight < 2 ? 2 : maxHeight > 10 ? 10 : maxHeight;
           document.getElementById("cuttingResult").innerText = `
             不規則形狀間隔 ${offset}mm。
-            普通切割方式（不轉向）：每張板材可切 ${normalPieces} 片。
-            切割方案：${normalConfig}\n
-            最佳切割方式：每張板材可切 ${bestResult.maxPieces} 片。
+            普通切割方式（不轉向）：每張板材可切 ${normalPieces} pcs。
+            切割方案：${normalConfig}
+            普通切割材料浪費：${wastePercentNormalRounded}%\n
+            最佳切割方式：每張板材可切 ${bestResult.maxPieces} pcs。
             切割方案：${bestResult.bestConfig}\n
-            材料浪費：${wastePercentRounded}%`;
+            最佳切割材料浪費：${wastePercentRounded}%`;
         } else {
           document.getElementById("cuttingResult").innerText = `
-            普通切割方式（不轉向）：每張板材可切 ${normalPieces} 片。
-            切割方案：${normalConfig}\n
-            最佳切割方式：每張板材可切 ${bestResult.maxPieces} 片。
+            普通切割方式（不轉向）：每張板材可切 ${normalPieces} pcs。
+            切割方案：${normalConfig}
+            普通切割材料浪費：${wastePercentNormalRounded}%\n
+            最佳切割方式：每張板材可切 ${bestResult.maxPieces} pcs。
             切割方案：${bestResult.bestConfig}\n
-            材料浪費：${wastePercentRounded}%`;
+            最佳切割材料浪費：${wastePercentRounded}%`;
         }
-        window.latestWastePercent = wastePercentRounded;
+        window.wastePercentNormalRounded = wastePercentNormalRounded;
 
         return bestResult.maxPieces;
       }
@@ -1223,8 +1237,9 @@
           specialProcessing.length > 0 ? specialProcessing.join("、") : "無";
 
         // ========== 材料浪費率 ==========
-        let wastePercentRounded = window.latestWastePercent || "0.00";
-        window.latestWastePercent = wastePercentRounded;
+        let wastePercentNormalRounded =
+          window.wastePercentNormalRounded || "0.00";
+        window.wastePercentNormalRounded = wastePercentNormalRounded;
 
         // ========== 背膠 ==========
         let glueText = "不背膠";
@@ -1234,15 +1249,18 @@
           glueText = "指定膠 (+45/片)";
 
         // ========== 新增一行 ==========
+        const table_number = document
+          .getElementById("quoteTable")
+          .getElementsByTagName("tbody")[0];
         let newRow = table.insertRow();
-        newRow.insertCell(0).innerText = rowIndex++; // 序號
+        newRow.insertCell(0).innerText = table_number.rows.length; // 序號
         newRow.insertCell(1).innerText = `${item} / ${quantity} / ${sizeText}`; // 品項/數量/尺寸
         newRow.insertCell(2).innerText = yearUsage; // 年用量
         newRow.insertCell(3).innerText = moq; // MOQ
         newRow.insertCell(4).innerText = unitPrice;
         newRow.insertCell(5).innerText = discount; // 折數
         newRow.insertCell(6).innerText = (unitPrice * discount).toFixed(2); // ✅ 折後素材價
-        newRow.insertCell(7).innerText = wastePercentRounded + "%";
+        newRow.insertCell(7).innerText = wastePercentNormalRounded + "%";
         newRow.insertCell(8).innerText = specialText; // 特殊加工
         newRow.insertCell(9).innerText = glueText; // 背膠
         newRow.insertCell(10).innerText = knifeMoldCost.toString(); // 刀模費用
