@@ -682,7 +682,7 @@
               firstCutRows * firstCutColumns + secondCutRows * secondCutColumns;
             if (totalPieces > maxPieces) {
               maxPieces = totalPieces;
-              bestConfig = `先切 ${firstCutRows} 列，每列 ${firstCutColumns} 片，剩餘高度再切 ${secondCutRows} 列，每列 ${secondCutColumns} 片。`;
+              bestConfig = `先切 ${firstCutRows} 列，每列 ${firstCutColumns} pcs，剩餘高度再切 ${secondCutRows} 列，每列 ${secondCutColumns} pcs。`;
             }
           }
           return { maxPieces, bestConfig };
@@ -796,7 +796,7 @@
               firstCutRows * firstCutColumns + secondCutRows * secondCutColumns;
             if (totalPieces > maxPieces) {
               maxPieces = totalPieces;
-              bestConfig = `先切 ${firstCutRows} 列，每列 ${firstCutColumns} 片，剩餘高度再切 ${secondCutRows} 列，每列 ${secondCutColumns} 片。`;
+              bestConfig = `先切 ${firstCutRows} 列，每列 ${firstCutColumns} pcs，剩餘高度再切 ${secondCutRows} 列，每列 ${secondCutColumns} pcs。`;
             }
           }
           return { maxPieces, bestConfig };
