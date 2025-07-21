@@ -1523,21 +1523,73 @@
 
       function exportToExcel() {
         updateRowIndices();
+        const shippingFee = document.getElementById("fee").value || "0";
         const table = document.getElementById("quoteTable");
         const rows = Array.from(table.rows);
         const exportData = [];
 
-        // 1️⃣ 擷取主表格資料（A～Q欄）
-        rows.forEach((row) => {
+        let totalAnnualAmountAll = 0;
+
+        // 1️⃣ 擷取標題列並加入 "年總金額"
+        const headerCells = Array.from(rows[0].cells);
+        const headerRow = headerCells
+          .slice(0, 17)
+          .filter((_, index) => index !== 11 && index !== 13)
+          .map((cell) => cell.innerText);
+        headerRow.push("年總金額");
+        exportData.push(headerRow);
+
+        rows.slice(1).forEach((row) => {
           const cells = Array.from(row.cells);
           const cleanRow = cells
             .slice(0, 17)
             .filter((_, index) => index !== 11 && index !== 13)
             .map((cell) => cell.innerText);
+
+          const orderQty =
+            parseFloat(cells[2]?.innerText.replace(/,/g, "")) || 0; // 年用量
+          const unitPriceWithShipping =
+            parseFloat(cells[12]?.innerText.replace(/,/g, "")) || 0; // 含出口費用單pcs
+          const totalAnnualAmount = orderQty * unitPriceWithShipping;
+          totalAnnualAmountAll += totalAnnualAmount;
+
+          cleanRow.push(totalAnnualAmount.toFixed(2)); // 加入 P 欄
           exportData.push(cleanRow);
         });
 
-        // 2️⃣ 擷取基本資料欄位（藍色區塊）
+        // 2️⃣ 計算統計數值
+        let totalWithShipping = 0;
+        let totalExportFee = 0;
+        let totalWithShipping1 = 0;
+
+        rows.forEach((row) => {
+          const cells = Array.from(row.cells);
+          const withShipping =
+            parseFloat(cells[12]?.innerText.replace(/,/g, "")) || 0; // M
+          const withoutShipping =
+            parseFloat(cells[11]?.innerText.replace(/,/g, "")) || 0; // L
+          const withShipping1 =
+            parseFloat(cells[14]?.innerText.replace(/,/g, "")) || 0; // 含蘊總價
+          totalWithShipping += withShipping;
+          totalWithShipping1 += withShipping1;
+          totalExportFee += withShipping - withoutShipping;
+        });
+
+        const exportRatio =
+          (shippingFee / (totalWithShipping1 - shippingFee)) * 100;
+
+        const totalWithShippingStr = totalWithShipping.toLocaleString();
+        const totalWithShippingStr1 = totalWithShipping1.toLocaleString();
+        const exportRatioStr = exportRatio.toFixed(2) + "%";
+
+        // 3️⃣ 將統計數值寫入
+        const rowSummary = Array(17).fill("");
+        rowSummary[12] = totalWithShippingStr1; // M欄
+        rowSummary[13] = exportRatioStr; // N欄
+        rowSummary[15] = totalAnnualAmountAll.toFixed(2);
+        exportData.push(rowSummary); // 插入統計行
+
+        // 4️⃣ 擷取基本資料欄位（藍色區塊）
         const companyName = document.getElementById("companyName").value || "";
         const listedStatus =
           document.querySelector('input[name="listedCompany"]:checked')
@@ -1557,14 +1609,12 @@
         const condition =
           document.getElementById("condition").value || "未選擇";
 
-        // 3️⃣ 新增費用欄位
-        const shippingFee = document.getElementById("fee").value || "0";
+        // 5️⃣ 新增費用欄位
         const taiwanFee = document.getElementById("freight").value || "0";
         const destinationFee = document.getElementById("taxe").value || "0";
 
-        // 4️⃣ 插入空白列後新增補充資訊（前面補14欄空白，對齊O欄起）
+        // 6️⃣ 插入補充資訊（從第 exportData.length 開始）
         const indent = Array(0).fill("");
-
         exportData.push([]);
         exportData.push([...indent, "◎客戶：", companyName]);
         exportData.push([...indent, "◎上市櫃：", listedStatus]);
@@ -1581,141 +1631,24 @@
         exportData.push([...indent, "台灣報關費用：", taiwanFee]);
         exportData.push([...indent, "目的地費用：", destinationFee]);
 
-        // 5️⃣ 匯出
+        // 7️⃣ 匯出 Excel
         const ws = XLSX.utils.aoa_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "報價單");
-        // 建立日期字串（格式：YYYY-MM-DD）
-        const today = new Date();
-        const dateStr = today.toISOString().split("T")[0]; // 例如：2025-07-08
 
-        // 清理客戶名稱（移除空白與非法字元）
+        // 建立日期字串
+        const today = new Date();
+        const dateStr = today.toISOString().split("T")[0];
         const cleanCompanyName = companyName
           .trim()
           .replace(/[\\/:*?"<>|]/g, "_");
-
-        // 組合檔案名稱
         const filename = `報價單-${
           cleanCompanyName || "未填寫"
         }-${dateStr}.xlsx`;
 
-        // 匯出 Excel
         XLSX.writeFile(wb, filename);
       }
 
-      // function exportToExcel() {
-      //   const table = document.getElementById("quoteTable");
-      //   const rows = Array.from(table.rows);
-      //   const exportData = [];
-
-      //   // 1️⃣ 擷取主表格資料（取前 13 欄）
-      //   rows.forEach((row) => {
-      //     const cells = Array.from(row.cells);
-      //     const cleanRow = cells.slice(0, 14).map((cell) => cell.innerText);
-      //     exportData.push(cleanRow);
-      //   });
-
-      //   // 2️⃣ 擷取基本資料欄位
-      //   const companyName = document.getElementById("companyName").value || "";
-      //   const listedCompany =
-      //     document.querySelector('input[name="listedCompany"]:checked')
-      //       ?.value || "";
-      //   const industryType =
-      //     document.getElementById("industryType").value || "";
-      //   const isCompetitor =
-      //     document.querySelector('input[name="isCompetitor"]:checked')?.value ||
-      //     "";
-      //   const competitorName =
-      //     isCompetitor === "是"
-      //       ? document.getElementById("OtherCompetitorName").value || "無"
-      //       : "";
-
-      //   // 3️⃣ 基本資料表頭 + 資料列，先建成兩列
-      //   const baseInfoHeader = []; // 第 1 列（O欄起）
-      //   const baseInfoRow = []; // 第 2 列（O欄起）
-
-      //   // 補齊前14欄（A～N空白）
-      //   for (let i = 0; i < 15; i++) {
-      //     baseInfoHeader.push("");
-      //     baseInfoRow.push("");
-      //   }
-
-      //   // O～S欄資料
-      //   baseInfoHeader.push(
-      //     "公司名稱",
-      //     "上市櫃",
-      //     "產業別",
-      //     "是否有競爭對手",
-      //     "對手公司"
-      //   );
-      //   baseInfoRow.push(
-      //     companyName,
-      //     listedCompany,
-      //     industryType,
-      //     isCompetitor,
-      //     competitorName
-      //   );
-      //   updateShippingFeeAndUnitCost();
-      //   // 插入最上方
-      //   exportData.unshift(baseInfoRow);
-      //   exportData.unshift(baseInfoHeader);
-
-      //   // 4️⃣ 匯出
-      //   const ws = XLSX.utils.aoa_to_sheet(exportData);
-      //   const wb = XLSX.utils.book_new();
-      //   XLSX.utils.book_append_sheet(wb, ws, "報價單");
-      //   XLSX.writeFile(wb, "報價單.xlsx");
-      // }
-
-      // function updateShippingFeeAndUnitCost() {
-      //   const table = document
-      //     .getElementById("quoteTable")
-      //     .getElementsByTagName("tbody")[0];
-      //   const rows = table.getElementsByTagName("tr");
-
-      //   let totalQuantity = 0;
-      //   let freight = parseFloat(document.getElementById("freight").value) || 0;
-      //   let taxe = parseFloat(document.getElementById("taxe").value) || 0;
-      //   let fee = parseFloat(document.getElementById("fee").value) || 0;
-      //   let shippingFee = freight + taxe + fee;
-
-      //   // 第一步：計算總數量
-      //   for (let row of rows) {
-      //     const cellText = row.cells[1].innerText; // 品項/數量/尺寸
-      //     const parts = cellText.split("/");
-      //     if (parts.length >= 2) {
-      //       const quantity = parseInt(parts[1].trim()) || 0;
-      //       totalQuantity += quantity;
-      //     }
-      //   }
-
-      //   // 第二步：平均分攤運費到每個品項
-      //   for (let row of rows) {
-      //     const unitPrice = parseFloat(row.cells[7].innerText) || 0; // 原本的 1pcs價格
-      //     const cellText = row.cells[1].innerText;
-      //     const parts = cellText.split("/");
-      //     const quantity =
-      //       parts.length >= 2 ? parseInt(parts[1].trim()) || 0 : 0;
-
-      //     const shippingPerPiece =
-      //       totalQuantity > 0 ? shippingFee / totalQuantity : 0;
-      //     const unitPriceWithShippingNum = unitPrice + shippingPerPiece;
-      //     const unitPriceWithShipping = unitPriceWithShippingNum.toFixed(2); // 顯示用
-      //     const priceWithShipping = (
-      //       unitPriceWithShippingNum * quantity
-      //     ).toFixed(2); // 計算用 + 顯示用
-      //     const Freight_ratio =
-      //       unitPriceWithShippingNum > 0
-      //         ? ((shippingPerPiece / unitPriceWithShippingNum) * 100).toFixed(
-      //             1
-      //           ) + "%"
-      //         : "0%";
-
-      //     row.cells[8].innerText = unitPriceWithShipping; // 第9欄：單價(含運)
-      //     row.cells[10].innerText = priceWithShipping; // 第11欄：總價(含運)
-      //     row.cells[11].innerText = Freight_ratio;
-      //   }
-      // }
       function updateShippingFeeAndUnitCost() {
         const table = document
           .getElementById("quoteTable")
