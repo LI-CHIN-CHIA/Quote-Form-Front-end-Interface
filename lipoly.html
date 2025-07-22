@@ -1240,7 +1240,7 @@
         // ========== 裁切費用 ==========
         const cuttingCost = quantity * 0.1;
         if (quantity > 0) {
-          specialProcessing.push(`裁切費用 (+0.1/pcs) x ${quantity}`);
+          specialProcessing.push(`裁切費用 (+0.1/pcs)`);
         }
 
         // ========== 刀模費 ==========
@@ -1523,7 +1523,21 @@
 
       function exportToExcel() {
         updateRowIndices();
-        const shippingFee = document.getElementById("fee").value || "0";
+        // let shippingFreight = document.getElementById("freight").value || "0";
+        // let shippingFee = document.getElementById("fee").value || "0";
+        // let shippingTaxe = document.getElementById("taxe").value || "0";
+        const shippingFee =
+          parseFloat(document.getElementById("fee").value) || 0;
+        const taiwanFee =
+          parseFloat(document.getElementById("freight").value) || "0";
+        const destinationFee =
+          parseFloat(document.getElementById("taxe").value) || "0";
+
+        console.log("轉換後數值：", shippingFee, taiwanFee, destinationFee);
+
+        const Allshipping = shippingFee + taiwanFee + destinationFee;
+        console.log("Allshipping 加總結果：", Allshipping);
+
         const table = document.getElementById("quoteTable");
         const rows = Array.from(table.rows);
         const exportData = [];
@@ -1575,8 +1589,12 @@
           totalExportFee += withShipping - withoutShipping;
         });
 
-        const exportRatio =
-          (shippingFee / (totalWithShipping1 - shippingFee)) * 100;
+        console.log("totalWithShipping 加總結果：", totalWithShipping1);
+        let exportRatio = 0;
+        if (totalWithShipping1 - Allshipping !== 0) {
+          exportRatio =
+            (Allshipping / (totalWithShipping1 - Allshipping)) * 100;
+        }
 
         const totalWithShippingStr = totalWithShipping.toLocaleString();
         const totalWithShippingStr1 = totalWithShipping1.toLocaleString();
@@ -1608,10 +1626,6 @@
         const shipping = document.getElementById("shipping").value || "未選擇";
         const condition =
           document.getElementById("condition").value || "未選擇";
-
-        // 5️⃣ 新增費用欄位
-        const taiwanFee = document.getElementById("freight").value || "0";
-        const destinationFee = document.getElementById("taxe").value || "0";
 
         // 6️⃣ 插入補充資訊（從第 exportData.length 開始）
         const indent = Array(0).fill("");
