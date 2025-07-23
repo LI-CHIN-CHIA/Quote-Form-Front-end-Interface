@@ -1550,7 +1550,7 @@
           .slice(0, 17)
           .filter((_, index) => index !== 11 && index !== 13)
           .map((cell) => cell.innerText);
-        headerRow.push("年總金額");
+        headerRow.push("年總金額(含出口費)");
         exportData.push(headerRow);
 
         rows.slice(1).forEach((row) => {
